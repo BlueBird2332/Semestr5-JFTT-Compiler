@@ -1,0 +1,31 @@
+PROCEDURE is_prime(n) IS
+    i, is_prime
+BEGIN
+    is_prime := 1;
+    
+    IF n <= 1 THEN
+        is_prime := 0;
+    ELSE
+        i := 2;
+        WHILE i * i <= n DO
+            IF n % i = 0 THEN
+                is_prime := 0;
+            ENDIF
+            i := i + 1;
+        ENDWHILE
+    ENDIF
+END
+
+PROGRAM IS
+    start, end, current
+BEGIN
+    READ start;
+    READ end;
+
+    FOR current FROM start TO end DO
+        is_prime(current);
+        IF is_prime = 1 THEN
+            WRITE current;
+        ENDIF
+    ENDFOR
+END

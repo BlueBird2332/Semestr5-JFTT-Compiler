@@ -1,0 +1,480 @@
+[
+  {
+    "type": "args",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "args",
+          "named": true
+        },
+        {
+          "type": "pidentifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "args_decl",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "args_decl",
+          "named": true
+        },
+        {
+          "type": "pidentifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "command",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "commands",
+          "named": true
+        },
+        {
+          "type": "condition",
+          "named": true
+        },
+        {
+          "type": "expression",
+          "named": true
+        },
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "pidentifier",
+          "named": true
+        },
+        {
+          "type": "proc_call",
+          "named": true
+        },
+        {
+          "type": "value",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "commands",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "command",
+          "named": true
+        },
+        {
+          "type": "commands",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "condition",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "declarations",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "declarations",
+          "named": true
+        },
+        {
+          "type": "num",
+          "named": true
+        },
+        {
+          "type": "pidentifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "expression",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "value",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "identifier",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "num",
+          "named": true
+        },
+        {
+          "type": "pidentifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "main",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "commands",
+          "named": true
+        },
+        {
+          "type": "declarations",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "proc_call",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "args",
+          "named": true
+        },
+        {
+          "type": "pidentifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "proc_head",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "args_decl",
+          "named": true
+        },
+        {
+          "type": "pidentifier",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "procedure_def",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "commands",
+          "named": true
+        },
+        {
+          "type": "declarations",
+          "named": true
+        },
+        {
+          "type": "proc_head",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "procedures",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "procedure_def",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "program_all",
+    "named": true,
+    "root": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "main",
+          "named": true
+        },
+        {
+          "type": "procedures",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "value",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "identifier",
+          "named": true
+        },
+        {
+          "type": "num",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "!=",
+    "named": false
+  },
+  {
+    "type": "%",
+    "named": false
+  },
+  {
+    "type": "(",
+    "named": false
+  },
+  {
+    "type": ")",
+    "named": false
+  },
+  {
+    "type": "*",
+    "named": false
+  },
+  {
+    "type": "+",
+    "named": false
+  },
+  {
+    "type": ",",
+    "named": false
+  },
+  {
+    "type": "-",
+    "named": false
+  },
+  {
+    "type": "/",
+    "named": false
+  },
+  {
+    "type": ":",
+    "named": false
+  },
+  {
+    "type": ":=",
+    "named": false
+  },
+  {
+    "type": ";",
+    "named": false
+  },
+  {
+    "type": "<",
+    "named": false
+  },
+  {
+    "type": "<=",
+    "named": false
+  },
+  {
+    "type": "=",
+    "named": false
+  },
+  {
+    "type": ">",
+    "named": false
+  },
+  {
+    "type": ">=",
+    "named": false
+  },
+  {
+    "type": "BEGIN",
+    "named": false
+  },
+  {
+    "type": "DO",
+    "named": false
+  },
+  {
+    "type": "DOWNTO",
+    "named": false
+  },
+  {
+    "type": "ELSE",
+    "named": false
+  },
+  {
+    "type": "END",
+    "named": false
+  },
+  {
+    "type": "ENDFOR",
+    "named": false
+  },
+  {
+    "type": "ENDIF",
+    "named": false
+  },
+  {
+    "type": "ENDWHILE",
+    "named": false
+  },
+  {
+    "type": "FOR",
+    "named": false
+  },
+  {
+    "type": "FROM",
+    "named": false
+  },
+  {
+    "type": "IF",
+    "named": false
+  },
+  {
+    "type": "IS",
+    "named": false
+  },
+  {
+    "type": "PROCEDURE",
+    "named": false
+  },
+  {
+    "type": "PROGRAM",
+    "named": false
+  },
+  {
+    "type": "READ",
+    "named": false
+  },
+  {
+    "type": "REPEAT",
+    "named": false
+  },
+  {
+    "type": "T",
+    "named": false
+  },
+  {
+    "type": "THEN",
+    "named": false
+  },
+  {
+    "type": "TO",
+    "named": false
+  },
+  {
+    "type": "UNTIL",
+    "named": false
+  },
+  {
+    "type": "WHILE",
+    "named": false
+  },
+  {
+    "type": "WRITE",
+    "named": false
+  },
+  {
+    "type": "[",
+    "named": false
+  },
+  {
+    "type": "]",
+    "named": false
+  },
+  {
+    "type": "comment",
+    "named": true
+  },
+  {
+    "type": "num",
+    "named": true
+  },
+  {
+    "type": "pidentifier",
+    "named": true
+  }
+]
