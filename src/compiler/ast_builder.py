@@ -8,24 +8,25 @@ class ASTBuilder:
     """
     
     def build(self, node: Any) -> Program:
-        """Entry point for AST building."""
-        if node is None:
-            raise ValueError("Cannot build AST from None node")
-            
+        """
+        Build complete program according to grammar:
+        program_all -> procedures main
+                    | main
+        """
         if node.type != 'program_all':
             raise ValueError(f"Expected program_all node, got {node.type}")
-            
+                
         procedures = []
         declarations = []
         commands = []
         
-        # Process each child based on type
+        # First collect all procedures
         for child in node.children:
             if child.type == 'procedures':
                 procedures = self.build_procedures(child)
             elif child.type == 'main':
                 declarations, commands = self.build_main(child)
-                
+                    
         return Program(
             location=self.get_location(node),
             procedures=procedures,
@@ -37,15 +38,20 @@ class ASTBuilder:
         """
         Build list of procedures.
         procedures -> procedures PROCEDURE proc_head IS declarations BEGIN commands END
-                   | procedures PROCEDURE proc_head IS BEGIN commands END
-                   | ε
+                    | procedures PROCEDURE proc_head IS BEGIN commands END
         """
         procedures = []
         
-        for child in node.children:
-            if child.type == 'procedure_def':
-                procedures.append(self.build_procedure_def(child))
-                
+        def collect_procedures(node):
+            procs = []
+            for child in node.children:
+                if child.type == 'procedures':
+                    procs.extend(collect_procedures(child))
+                elif child.type == 'procedure_def':
+                    procs.append(self.build_procedure_def(child))
+            return procs
+        
+        procedures = collect_procedures(node)
         return procedures
 
     def build_procedure_def(self, node: Any) -> Procedure:
@@ -61,10 +67,10 @@ class ASTBuilder:
                 declarations = self.build_declarations(child)
             elif child.type == 'commands':
                 commands = self.build_commands(child)
-                
+                    
         if not proc_head:
             raise ValueError("Procedure definition missing procedure head")
-            
+                
         return Procedure(
             location=self.get_location(node),
             name=proc_head.name,
@@ -73,9 +79,9 @@ class ASTBuilder:
             commands=commands
         )
 
-    def build_proc_head(self, node: Any) -> ProcHead:
+    def build_proc_head(self, node) -> ProcHead:
         """
-        Build procedure head.
+        Build procedure head according to grammar:
         proc_head -> pidentifier ( args_decl )
         """
         name = None
@@ -89,32 +95,39 @@ class ASTBuilder:
                 
         if not name:
             raise ValueError("Procedure head missing name")
-            
+                
         return ProcHead(
             location=self.get_location(node),
             name=name,
             parameters=parameters
         )
 
-    def build_args_decl(self, node: Any) -> List[Tuple[str, bool]]:
+    def build_args_decl(self, node) -> List[Tuple[str, bool]]:
         """
-        Build procedure parameter declarations.
-        args_decl -> args_decl , pidentifier
-                  | args_decl , T pidentifier
-                  | pidentifier
-                  | T pidentifier
+        Build procedure parameter declarations according to grammar:
+        args_decl -> args_decl , pidentifier    # Regular parameter
+                | args_decl , T pidentifier   # Array parameter
+                | pidentifier                 # Regular parameter
+                | T pidentifier               # Array parameter
         """
-        params = []
-        is_array = False
+        parameters = []
         
-        for child in node.children:
-            if child.text == b'T':
-                is_array = True
-            elif child.type == 'pidentifier':
-                params.append((child.text.decode('utf8'), is_array))
-                is_array = False
-                
-        return params
+        def collect_params(node):
+            params = []
+            is_array = False
+            
+            for child in node.children:
+                if child.type == 'args_decl':
+                    params.extend(collect_params(child))
+                elif child.text == b'T':
+                    is_array = True
+                elif child.type == 'pidentifier':
+                    params.append((child.text.decode('utf8'), is_array))
+                    is_array = False
+                    
+            return params
+        
+        return collect_params(node)
 
     def build_main(self, node: Any) -> Tuple[List[Declaration], List[Command]]:
         """
@@ -350,21 +363,46 @@ class ASTBuilder:
         )
 
     def build_proc_call(self, node: Any) -> ProcedureCall:
-        """Build procedure call: proc_call -> pidentifier ( args )"""
+        """
+        Build a procedure call according to grammar:
+        proc_call -> pidentifier ( args )
+        args -> args , pidentifier | pidentifier
+        """
         name = None
         arguments = []
         
         for child in node.children:
-            if child.type == 'pidentifier' and not name:
+            if child.type == 'pidentifier' and name is None:
                 name = child.text.decode('utf8')
             elif child.type == 'args':
-                arguments = self.build_args(child)
+                arguments = self.collect_args(child)
                 
         return ProcedureCall(
             location=self.get_location(node),
             name=name,
             arguments=arguments
         )
+
+    def collect_args(self, node: Any) -> List[Identifier]:
+        """
+        Recursively collect arguments from args node.
+        Handles nested structure: args -> args , pidentifier | pidentifier
+        """
+        arguments = []
+        
+        def _collect_args(node):
+            args = []
+            for child in node.children:
+                if child.type == 'args':
+                    args.extend(_collect_args(child))
+                elif child.type == 'pidentifier':
+                    args.append(Identifier(
+                        location=self.get_location(child),
+                        name=child.text.decode('utf8')
+                    ))
+            return args
+        
+        return _collect_args(node)
 
     def build_read(self, node: Any) -> ReadCommand:
         """Build read command: READ identifier ;"""

@@ -11,7 +11,7 @@ BEGIN
     tab[-2] := -2;  # Should be 84
     
     # Mixed operations
-    tab[-1] := - 2;   # Should be 5
+    tab[-1] := -2;   # Should be 5
     tab[0] := -5;    # Should be -2
     
     # Print results

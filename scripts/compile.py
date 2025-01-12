@@ -67,8 +67,8 @@ def main():
     
     if not success:
         print("\nCompilation failed due to semantic errors!")
-        for message, location in semantic_errors:
-            print(format_error(message, location.line, location.column, source_lines))
+        for message in semantic_errors:
+            print(format_error(message, message.line, message.column, source_lines))
         sys.exit(1)
 
     if args.semantic_only:

@@ -18,12 +18,34 @@ class SymbolTable:
         self.procedures: Dict[str, List[Tuple[str, bool]]] = {}  # procedure_name -> [(param_name, is_array)]
         self.current_procedure: Optional[str] = None
         
+    def add_procedure(self, name: str, parameters: List[Tuple[str, bool]]) -> None:
+        """Add procedure with its parameters."""
+        if name in self.procedures:
+            raise ValueError(f"Procedure {name} already defined")
+            
+        self.procedures[name] = parameters
+        # Add procedure to symbol table as a special type
+        self.add_symbol(
+            name=name,
+            symbol_type='procedure',
+            is_array=False
+        )
+
+    def get_procedure_params(self, name: str) -> Optional[List[Tuple[str, bool]]]:
+        """Get procedure parameters if procedure exists."""
+        return self.procedures.get(name)
+
+    def is_procedure(self, name: str) -> bool:
+        """Check if name refers to a procedure."""
+        symbol = self.lookup(name)
+        return symbol is not None and symbol.symbol_type == 'procedure'
+        
     def enter_procedure(self, name: str):
         """Enter a procedure scope."""
         self.current_procedure = name
         
     def exit_procedure(self):
-        """Exit the current procedure scope."""
+        """Exit the current procedure scope. Used when leaving a procedure to set a global scope."""
         self.current_procedure = None
             
     def get_current_scope_name(self) -> str:
@@ -62,23 +84,6 @@ class SymbolTable:
             is_array_parameter=is_array_parameter,
             procedure_name=effective_procedure
         )
-    
-    def add_procedure(self, name: str, parameters: List[Tuple[str, bool]]):
-        """Add a procedure definition with its parameters."""
-        if name in self.procedures:
-            raise ValueError(f"Procedure {name} already defined")
-        self.procedures[name] = parameters
-        
-        # Add parameters to symbol table
-        for param_name, is_array in parameters:
-            self.add_symbol(
-                name=param_name,
-                symbol_type='parameter',
-                is_array=is_array,
-                is_parameter=True,
-                is_array_parameter=is_array,
-                procedure_name=name
-            )
         
     def lookup(self, name: str) -> Optional[Symbol]:
         """Look up a symbol, checking both current procedure and global scope."""
@@ -141,3 +146,13 @@ class SymbolTable:
             start, end = bounds
             return start <= index <= end
         return False
+    
+    def print_table(self):
+        """Print the symbol table for debugging."""
+        print("Symbol table:")
+        for name, symbol in self.symbols.items():
+            print(f"  {name}: {symbol}")
+        print("Procedure table:")
+        for name, params in self.procedures.items():
+            print(f"  {name}: {params}")
+        print(f"Current procedure: {self.current_procedure}")
