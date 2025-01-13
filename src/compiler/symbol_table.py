@@ -12,6 +12,19 @@ class Symbol:
     is_array_parameter: bool = False
     procedure_name: Optional[str] = None  # For tracking which procedure a symbol belongs to # For tracking which procedure a symbol belongs to
 
+
+    def __str__(self) -> str:
+        return f"""
+        Name: {self.name}
+        Type: {self.symbol_type}
+        Array: {self.is_array}
+        Array Start: {self.array_start}
+        Array End: {self.array_end}
+        Parameter: {self.is_parameter}
+        Array Parameter: {self.is_array_parameter}
+        Procedure: {self.procedure_name}
+        """
+        
 class SymbolTable:
     def __init__(self):
         self.symbols: Dict[str, Symbol] = {}
@@ -84,6 +97,9 @@ class SymbolTable:
             is_array_parameter=is_array_parameter,
             procedure_name=effective_procedure
         )
+        
+        print(f"Added symbol {full_name} to table")
+        print(self.symbols[full_name])
         
     def lookup(self, name: str) -> Optional[Symbol]:
         """Look up a symbol, checking both current procedure and global scope."""

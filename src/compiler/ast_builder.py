@@ -117,6 +117,7 @@ class ASTBuilder:
             is_array = False
             
             for child in node.children:
+                # print(f"child: {child} child.type: {child.type} child.text: {child.text}")
                 if child.type == 'args_decl':
                     params.extend(collect_params(child))
                 elif child.text == b'T':
@@ -165,6 +166,7 @@ class ASTBuilder:
                         decls.extend(collect_declarations(child))
                     elif child.type == 'pidentifier':
                         # Create declaration for this identifier
+                        # print(f"Declaration child: {child} child.text: {child.text}")
                         current_decl = {
                             "name": child.text.decode('utf8'),
                             "start": None,
@@ -183,8 +185,10 @@ class ASTBuilder:
                                     break
                         
                         if len(num_values) == 2:
+                            # print(f"NUM VALUES: {num_values}")  
                             current_decl["start"] = num_values[0]
                             current_decl["end"] = num_values[1]
+                            # print(f"current_decl: {current_decl}")
                         
                         decls.append(self.create_declaration(current_decl))
                         

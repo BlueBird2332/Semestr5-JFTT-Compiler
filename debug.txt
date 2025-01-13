@@ -1,0 +1,533 @@
+AST built successfully!
+s
+Adding procedure s with parameters [('n', False), ('m', False)]
+Added symbol s to table
+
+        Name: s
+        Type: procedure
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: None
+        
+procedure s initialized variables: set()
+prev_initialized: set()
+procedure parameters: [('n', False), ('m', False)]
+Added symbol s_n to table
+
+        Name: n
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: s
+        
+Added symbol s_m to table
+
+        Name: m
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: s
+        
+Added symbol s_o to table
+
+        Name: o
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: s
+        
+Checking assignment Assignment(location=Location(line=9, column=4), target=Identifier(location=Location(line=9, column=4), name='m', array_index=None), value=Number(location=Location(line=9, column=7), value=1))
+Checking in _check_variable variable m
+Symbol: 
+        Name: m
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: s
+        
+None
+Checking in _check_variable variable n
+Symbol: 
+        Name: n
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: s
+        
+None
+Checking if n is initialized
+Added symbol s_i to table
+
+        Name: i
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: s
+        
+Checking assignment Assignment(location=Location(line=11, column=8), target=Identifier(location=Location(line=11, column=8), name='o', array_index=None), value=BinaryOp(location=Location(line=11, column=11), left=Identifier(location=Location(line=11, column=11), name='i', array_index=None), operator='%', right=Number(location=Location(line=11, column=13), value=2)))
+Checking in _check_variable variable o
+Symbol: 
+        Name: o
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: s
+        
+None
+Checking in _check_variable variable i
+Symbol: 
+        Name: i
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: s
+        
+None
+Checking if i is initialized
+Checking in _check_variable variable o
+Symbol: 
+        Name: o
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: s
+        
+None
+Checking if o is initialized
+Checking assignment Assignment(location=Location(line=13, column=12), target=Identifier(location=Location(line=13, column=12), name='m', array_index=None), value=BinaryOp(location=Location(line=13, column=15), left=Identifier(location=Location(line=13, column=15), name='m', array_index=None), operator='*', right=Identifier(location=Location(line=13, column=17), name='i', array_index=None)))
+Checking in _check_variable variable m
+Symbol: 
+        Name: m
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: s
+        
+None
+Checking in _check_variable variable m
+Symbol: 
+        Name: m
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: s
+        
+None
+Checking if m is initialized
+Checking in _check_variable variable i
+Symbol: 
+        Name: i
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: s
+        
+None
+Checking if i is initialized
+Checking assignment Assignment(location=Location(line=15, column=12), target=Identifier(location=Location(line=15, column=12), name='m', array_index=None), value=BinaryOp(location=Location(line=15, column=15), left=Identifier(location=Location(line=15, column=15), name='i', array_index=None), operator='*', right=Identifier(location=Location(line=15, column=17), name='m', array_index=None)))
+Checking in _check_variable variable m
+Symbol: 
+        Name: m
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: s
+        
+None
+Checking in _check_variable variable i
+Symbol: 
+        Name: i
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: s
+        
+None
+Checking if i is initialized
+Checking in _check_variable variable m
+Symbol: 
+        Name: m
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: s
+        
+None
+Checking if m is initialized
+bc
+Adding procedure bc with parameters [('n', False), ('k', False), ('m', False)]
+Added symbol bc to table
+
+        Name: bc
+        Type: procedure
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: None
+        
+procedure bc initialized variables: set()
+prev_initialized: set()
+procedure parameters: [('n', False), ('k', False), ('m', False)]
+Added symbol bc_n to table
+
+        Name: n
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: bc
+        
+Added symbol bc_k to table
+
+        Name: k
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: bc
+        
+Added symbol bc_m to table
+
+        Name: m
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: bc
+        
+Added symbol bc_p to table
+
+        Name: p
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: bc
+        
+Added symbol bc_a to table
+
+        Name: a
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: bc
+        
+Added symbol bc_b to table
+
+        Name: b
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: bc
+        
+Added symbol bc_c to table
+
+        Name: c
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: bc
+        
+Procedure s parameters: [('n', False), ('m', False)]
+Checking [Identifier(location=Location(line=23, column=5), name='n', array_index=None), Identifier(location=Location(line=23, column=7), name='a', array_index=None)]
+Checking n, local vars: {'b', 'c', 'p', 'a'}
+Checking a, local vars: {'b', 'c', 'p', 'a'}
+Checking assignment Assignment(location=Location(line=24, column=3), target=Identifier(location=Location(line=24, column=3), name='p', array_index=None), value=BinaryOp(location=Location(line=24, column=6), left=Identifier(location=Location(line=24, column=6), name='n', array_index=None), operator='-', right=Identifier(location=Location(line=24, column=8), name='k', array_index=None)))
+Checking in _check_variable variable p
+Symbol: 
+        Name: p
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: bc
+        
+None
+Checking in _check_variable variable n
+Symbol: 
+        Name: n
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: bc
+        
+None
+Checking if n is initialized
+Checking in _check_variable variable k
+Symbol: 
+        Name: k
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: bc
+        
+None
+Checking if k is initialized
+Procedure s parameters: [('n', False), ('m', False)]
+Checking [Identifier(location=Location(line=25, column=5), name='p', array_index=None), Identifier(location=Location(line=25, column=7), name='b', array_index=None)]
+Checking p, local vars: {'b', 'c', 'p', 'a'}
+Checking b, local vars: {'b', 'c', 'p', 'a'}
+Procedure s parameters: [('n', False), ('m', False)]
+Checking [Identifier(location=Location(line=26, column=5), name='k', array_index=None), Identifier(location=Location(line=26, column=7), name='c', array_index=None)]
+Checking k, local vars: {'b', 'c', 'p', 'a'}
+Checking c, local vars: {'b', 'c', 'p', 'a'}
+Checking assignment Assignment(location=Location(line=27, column=3), target=Identifier(location=Location(line=27, column=3), name='m', array_index=None), value=BinaryOp(location=Location(line=27, column=6), left=Identifier(location=Location(line=27, column=6), name='a', array_index=None), operator='/', right=Identifier(location=Location(line=27, column=8), name='b', array_index=None)))
+Checking in _check_variable variable m
+Symbol: 
+        Name: m
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: bc
+        
+None
+Checking in _check_variable variable a
+Symbol: 
+        Name: a
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: bc
+        
+None
+Checking if a is initialized
+Checking in _check_variable variable b
+Symbol: 
+        Name: b
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: bc
+        
+None
+Checking if b is initialized
+Checking assignment Assignment(location=Location(line=28, column=3), target=Identifier(location=Location(line=28, column=3), name='m', array_index=None), value=BinaryOp(location=Location(line=28, column=6), left=Identifier(location=Location(line=28, column=6), name='m', array_index=None), operator='/', right=Identifier(location=Location(line=28, column=8), name='c', array_index=None)))
+Checking in _check_variable variable m
+Symbol: 
+        Name: m
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: bc
+        
+None
+Checking in _check_variable variable m
+Symbol: 
+        Name: m
+        Type: parameter
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: True
+        Array Parameter: False
+        Procedure: bc
+        
+None
+Checking if m is initialized
+Checking in _check_variable variable c
+Symbol: 
+        Name: c
+        Type: local
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: bc
+        
+None
+Checking if c is initialized
+Added symbol n to table
+
+        Name: n
+        Type: global
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: None
+        
+Added symbol k to table
+
+        Name: k
+        Type: global
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: None
+        
+Added symbol w to table
+
+        Name: w
+        Type: global
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: None
+        
+Checking in _check_variable variable n
+Symbol: 
+        Name: n
+        Type: global
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: None
+        
+None
+Checking in _check_variable variable k
+Symbol: 
+        Name: k
+        Type: global
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: None
+        
+None
+Procedure bc parameters: [('n', False), ('k', False), ('m', False)]
+Checking [Identifier(location=Location(line=36, column=7), name='n', array_index=None), Identifier(location=Location(line=36, column=9), name='k', array_index=None), Identifier(location=Location(line=36, column=11), name='w', array_index=None)]
+Checking n, local vars: set()
+Checking k, local vars: set()
+Checking w, local vars: set()
+Checking in _check_variable variable w
+Symbol: 
+        Name: w
+        Type: global
+        Array: False
+        Array Start: None
+        Array End: None
+        Parameter: False
+        Array Parameter: False
+        Procedure: None
+        
+None
+Checking if w is initialized
+
+Compilation failed due to semantic errors!
+
+Error at line 27, column 6:
+Vaaariable 'a' used before initialization
+   m:=a/b;
+      ^
+
+
+Error at line 27, column 8:
+Vaaariable 'b' used before initialization
+   m:=a/b;
+        ^
+
+
+Error at line 28, column 8:
+Vaaariable 'c' used before initialization
+   m:=m/c;
+        ^
+
+
+Error at line 36, column 11:
+Variable 'w' used before initialization
+    bc(n,k,w);
+           ^
+
+
+Error at line 37, column 10:
+Vaaariable 'w' used before initialization
+    WRITE w;
+          ^
+

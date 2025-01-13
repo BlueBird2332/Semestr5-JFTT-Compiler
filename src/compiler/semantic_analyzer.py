@@ -35,16 +35,18 @@ class SemanticAnalyzer:
                 self._add_error(f"Procedure {proc.name} already defined", proc.location)
                 continue
             self.declared_procedures.add(proc.name)
+            print(f"Adding procedure {proc.name} with parameters {proc.parameters}")
             try:
                 self.symbol_table.add_procedure(proc.name, proc.parameters)
             except ValueError as e:
                 self._add_error(str(e), proc.location)
+
+            try:
+                self._check_procedure(proc)
+            except Exception as e:
+                self._add_error(str(e), proc.location)
         
-        # Then analyze each procedure
-        for proc in program.procedures:
-            if proc.name not in self.declared_procedures:
-                continue  # Skip analysis of duplicate procedures
-            self._check_procedure(proc)
+
         
         # Finally analyze main program
         self._check_main_program(program.declarations, program.commands)
@@ -68,6 +70,7 @@ class SemanticAnalyzer:
 
     def _check_procedure(self, proc: Procedure) -> None:
         """Check procedure body."""
+        # Save current procedure and enter new scope
         prev_procedure = self.current_procedure
         self.current_procedure = proc.name
         
@@ -76,7 +79,10 @@ class SemanticAnalyzer:
         
         # Save current initialized variables
         prev_initialized = self.initialized_variables.copy()
+        print(f"procedure {proc.name} initialized variables: {self.initialized_variables}")
+        print(f"prev_initialized: {prev_initialized}")
         self.initialized_variables.clear()
+        
         print(f"procedure parameters: {proc.parameters}") 
         # Add parameters to initialized variables and declare them
         for param_name, is_array in proc.parameters:
@@ -88,17 +94,16 @@ class SemanticAnalyzer:
                     is_array=is_array,
                     is_parameter=True
                 )
+                # Mark only the parameter as initialized, not local variables
+                self.initialized_variables.add(param_name)
             except ValueError as e:
                 self._add_error(str(e), proc.location)
-                
-            # Mark parameter as initialized
-            self.initialized_variables.add(param_name)
         
-        # Check local declarations
+        # Check local declarations but DON'T mark tshem as initialized
         for decl in proc.declarations:
             self._check_declaration(decl, 'local')
-            # Mark local variables as initialized immediately after declaration
-            self.initialized_variables.add(decl.name)
+            # Remove this line - local variables aren't automatically initialized
+            # self.initialized_variables.add(decl.name)
         
         # Check commands
         for cmd in proc.commands:
@@ -130,11 +135,10 @@ class SemanticAnalyzer:
             # For non-array arguments, check initialization
             if not is_array and arg.name not in self.initialized_variables:
                 self._add_error(
-                    f"Variable '{arg.name}' used before initialization",
+                    f"Vaaariable '{arg.name}' used before initialization",
                     arg.location
                 )
 
-    # src/compiler/semantic_analyzer.py (continued)
     def _check_command(self, cmd: Command) -> None:
         if isinstance(cmd, Assignment):
             self._check_assignment(cmd)
@@ -155,6 +159,7 @@ class SemanticAnalyzer:
 
     def _check_assignment(self, cmd: Assignment) -> None:
         # Check if target exists
+        print(f"Checking assignment {cmd}")  # Debug
         if not self._check_variable(cmd.target):
             return
 
@@ -247,29 +252,66 @@ class SemanticAnalyzer:
 
     def _check_procedure_call(self, cmd: ProcedureCall) -> None:
         """Check if a procedure call is semantically valid."""
-        print(f"Checking procedure call {cmd.name} with arguments {cmd.arguments}")
         
+        local_vars = set()
+        if self.current_procedure:
+            for name, symbol in self.symbol_table.symbols.items():
+                if (symbol.procedure_name == self.current_procedure and 
+                    symbol.symbol_type == 'local'):
+                    local_vars.add(symbol.name)
+        
+        if cmd.name == self.current_procedure:
+            self._add_error(f"Recursive procedure call to '{cmd.name}' is not allowed", cmd.location)
+            return
+                
         if cmd.name not in self.declared_procedures:
             self._add_error(f"Undefined procedure '{cmd.name}'", cmd.location)
             return
 
         proc_params = self.symbol_table.get_procedure_params(cmd.name)
+        print(f"Procedure {cmd.name} parameters: {proc_params}")
         if proc_params is None:
             self._add_error(f"Cannot find parameters for procedure '{cmd.name}'", cmd.location)
             return
 
-        print(f"Procedure {cmd.name} parameters: {proc_params}")
-        print(f"Call arguments: {cmd.arguments}")
-
         if len(cmd.arguments) != len(proc_params):
             self._add_error(
-                f"Wrong number of arguments in procedure '{cmd.name}' call. "
-                f"Expected {len(proc_params)}, got {len(cmd.arguments)}",
+                f"Wrong number of arguments in procedure '{cmd.name}' call",
                 cmd.location
             )
             return
 
-        # Check each argument
+        # # First, check all arguments for existence and type matching
+        # for i, (arg, (param_name, is_array)) in enumerate(zip(cmd.arguments, proc_params)):
+        #     if isinstance(arg, Identifier):
+        #         symbol = self.symbol_table.lookup(arg.name)
+        #         if not symbol:
+        #             self._add_error(f"Undefined variable '{arg.name}'", arg.location)
+        #             continue
+                
+        #         # Check array vs non-array match
+        #         if is_array != symbol.is_array:
+        #             self._add_error(
+        #                 f"Type mismatch for argument '{arg.name}'",
+        #                 arg.location
+        #             )
+        #             continue
+        # print(f"Checking {cmd.arguments}")
+        # for i, arg in enumerate(cmd.arguments):
+            
+        #     if isinstance(arg, Identifier):
+        #         print(f"Checking {arg.name}, local vars: {local_vars}")
+        #         # Don't check initialization for:
+        #         # 1. Local variables of current procedure
+        #         # 2. Parameters of current procedure
+        #         if (arg.name not in local_vars and 
+        #             not self.symbol_table.is_parameter(arg.name) and 
+        #             arg.name not in self.initialized_variables):
+        #             self._add_error(
+        #                 f"Variable '{arg.name}' used before initialization",
+        #                 arg.location
+        #             )
+        
         for i, (arg, (param_name, is_array)) in enumerate(zip(cmd.arguments, proc_params)):
             if isinstance(arg, Identifier):
                 symbol = self.symbol_table.lookup(arg.name)
@@ -280,29 +322,21 @@ class SemanticAnalyzer:
                 # Check array vs non-array match
                 if is_array != symbol.is_array:
                     self._add_error(
-                        f"Type mismatch for argument '{arg.name}': expected {'array' if is_array else 'variable'}, "
-                        f"got {'array' if symbol.is_array else 'variable'}",
+                        f"Type mismatch for argument '{arg.name}'",
                         arg.location
                     )
                     continue
-                
-                # Only check initialization for input parameters (not the last parameter)
-                if i < len(proc_params) - 1:
-                    if not is_array and arg.name not in self.initialized_variables:
-                        self._add_error(
-                            f"Variable '{arg.name}' used before initialization",
-                            arg.location
-                        )
-        
-        # Mark the last argument as initialized after the procedure call
-        if len(cmd.arguments) > 0:
-            last_arg = cmd.arguments[-1]
-            if isinstance(last_arg, Identifier):
-                self.initialized_variables.add(last_arg.name)
+
+                # Since parameters are IN-OUT, mark the variable as initialized 
+                # after the procedure call
+                self.initialized_variables.add(arg.name)
 
     def _check_variable(self, var: Identifier) -> bool:
         """Check if a variable reference is valid."""
         symbol = self.symbol_table.lookup(var.name)
+        print(f"Checking in _check_variable variable {var.name}")  # Debug
+        print(f"Symbol: {symbol}")  # Debug
+        print(var.array_index)
         if not symbol:
             self._add_error(f"Undefined variable '{var.name}'", var.location)
             return False
@@ -314,10 +348,9 @@ class SemanticAnalyzer:
                 return False
             # Check array index
             self._check_value(var.array_index)
-            
-            # For arrays, we consider them initialized after declaration
+
             if var.name not in self.initialized_variables:
-                if not symbol.is_parameter:  # Don't check initialization for parameters
+                if not symbol.is_parameter:
                     self._add_error(f"Array '{var.name}' used before initialization", var.location)
                     return False
         elif symbol.is_array:
@@ -348,10 +381,11 @@ class SemanticAnalyzer:
         elif isinstance(value, Identifier):
             if self._check_variable(value):
                 # Check if variable was initialized
+                print(f"Checking if {value.name} is initialized")  # Debug
                 if (value.name not in self.initialized_variables and 
                     not self.symbol_table.is_parameter(value.name)):
                     self._add_error(
-                        f"Variable '{value.name}' used before initialization",
+                        f"Vaaariable '{value.name}' used before initialization",
                         value.location
                     )
     # Add these methods to the SemanticAnalyzer class
@@ -389,12 +423,30 @@ class SemanticAnalyzer:
         # Save set of initialized variables before loop
         pre_loop_vars = set(self.initialized_variables)
         
-        # Check loop body
+        # Track variables that are guaranteed to be initialized in the first iteration
+        first_iter_vars = set()
+        
+        # First pass - collect variables initialized in first iteration
+        for command in cmd.body:
+            if isinstance(command, Assignment):
+                first_iter_vars.add(command.target.name)
+            elif isinstance(command, IfStatement):
+                # For if statements, only count variables initialized in both branches
+                then_vars = set()
+                else_vars = set()
+                # ... collect vars from both branches
+                common_vars = then_vars & else_vars
+                first_iter_vars.update(common_vars)
+        
+        # Add first iteration variables to initialized set
+        self.initialized_variables.update(first_iter_vars)
+        
+        # Second pass - actual command checking with updated initialization info
         for command in cmd.body:
             self._check_command(command)
         
-        # After loop, only variables that were initialized before loop are guaranteed to be initialized
-        self.initialized_variables = pre_loop_vars
+        # Keep variables that were initialized in all paths through the loop
+        self.initialized_variables.update(first_iter_vars)
 
     def _check_repeat_loop(self, cmd: RepeatLoop) -> None:
         # Save set of initialized variables before loop
