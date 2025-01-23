@@ -5,7 +5,7 @@ from compiler.semantic_analyzer import SemanticAnalyzer
 from compiler.utils import *
 import argparse
 import sys
-from compiler.TAC_Operations.tac_generator import TACGenerator
+from compiler.intermediate_rep.IR_generator import IRGenerator
 
 def format_error(message: str, line: int, column: int, source_lines: list[str]) -> str:
     source_line = source_lines[line - 1] if line <= len(source_lines) else ""
@@ -78,14 +78,27 @@ def main():
     if args.semantic_only:
         print("Semantic analysis completed successfully!")
         sys.exit(0)
-
+    
+    
+    print_ast(ast)
+    
     # At this point we have:
     # - Valid AST in 'ast'
     # - Symbol table in 'symbol_table'
     # - No syntax or semantic errors
+    
+
     print("Compilation successful!")
-    tac_gen = TACGenerator(symbol_table)
-    tac_gen.generate_code(ast)
+    tac_gen = IRGenerator(symbol_table)
+    ir = tac_gen.generate(ast)
+    for item in ir:
+        # print(item.print_full())
+        print(item)
+        
+    with open('IR_file', "w+") as f:
+        for item in ir:
+            f.write(item.print_full() + "\n")
+        
     # Generate VM code
     # success, code = vm_compiler.compile(ast, symbol_table, output_file)
     # if not success:

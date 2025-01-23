@@ -1,0 +1,47 @@
+L1: # PROC_START: Procedure de start
+de_a := de_m # Simple assignment
+de_b := de_n # Simple assignment
+de_x := 1 # Simple assignment
+de_y := 0 # Simple assignment
+de_r := de_n # Simple assignment
+de_s := de_m - 1 # Assignment with -
+L2: # WHILE_START: while loop start in proc de
+if de_b > 0 goto L4 # Exit loop if condition is false
+goto L3 # Jump to end of while loop
+L4: # WHILE_HELPER: while loop helper for condition evaluation
+de_reszta := de_a % de_b # Optimized % operation
+de_iloraz := de_a / de_b # Optimized / operation
+de_a := de_b # Simple assignment
+de_b := de_reszta # Simple assignment
+de_rr := de_r # Simple assignment
+de_tmp := de_iloraz * de_r # Optimized * operation
+if de_x < de_tmp goto L5 # Jump to else if condition is true
+goto L6 # Skip else block
+L5: # IF_ELSE: else branch in proc de
+de_r := de_n * de_iloraz # Optimized * operation
+L6: # IF_END: end of if in proc de
+de_r := de_r + de_x # Assignment with +
+de_r := de_r - de_tmp # Assignment with -
+de_ss := de_s # Simple assignment
+de_tmp := de_iloraz * de_s # Optimized * operation
+if de_y > de_tmp goto L7 # Jump to else if condition is true
+de_s := de_m * de_iloraz # Optimized * operation
+goto L8 # Skip else block
+L7: # IF_ELSE: else branch in proc de
+de_s := 0 # Simple assignment
+L8: # IF_END: end of if in proc de
+de_s := de_s + de_y # Assignment with +
+de_s := de_s - de_tmp # Assignment with -
+de_x := de_rr # Simple assignment
+de_y := de_ss # Simple assignment
+goto L2 # Jump back to start of while loop
+L3: # WHILE_END: while loop end in proc de
+de_z := de_a # Simple assignment
+return :=  # End of procedure de
+L9: # MAIN_START: Main program start
+read m # Read value into m
+read n # Read value into n
+call de(m, n, x, y, nwd, g) # Call procedure de
+write x # Write value x
+write y # Write value y
+write nwd # Write value nwd

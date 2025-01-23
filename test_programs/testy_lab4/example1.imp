@@ -1,6 +1,6 @@
 # Równanie diofantyczne mx-ny=nwd(m,n) (z)
 
-PROCEDURE de(m,n,x,y,z) IS
+PROCEDURE de(m,n,x,y,z,g) IS
   a,b,r,s,reszta,iloraz,rr,ss,tmp
 BEGIN
   a:=m;
@@ -19,14 +19,12 @@ BEGIN
     tmp:=iloraz*r;
     IF x<tmp THEN
       r:=n*iloraz;
-    ELSE
-      r:=0;
     ENDIF
     r:=r+x;
     r:=r-tmp;
     ss:=s;
     tmp:=iloraz*s;
-    IF y<tmp THEN
+    IF y<=tmp THEN
       s:=m*iloraz;
     ELSE
       s:=0;
@@ -39,12 +37,18 @@ BEGIN
   z:=a;
 END
 
+PROCEDURE pa(a,b) IS
+BEGIN
+  a:=a+b;
+  b:=a-b;
+END
+
 PROGRAM IS
-  m,n,x,y,nwd
+  m,n,x,y,nwd,g
 BEGIN
   READ m;
   READ n;
-  de(m,n,x,y,nwd);
+  de(m,n,x,y,nwd,g);
   WRITE x;
   WRITE y;
   WRITE nwd;

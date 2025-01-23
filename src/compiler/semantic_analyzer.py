@@ -30,12 +30,11 @@ class SemanticAnalyzer:
         
         # First just register procedures
         for proc in program.procedures:
-            print(proc.name)
             if proc.name in self.declared_procedures:
                 self._add_error(f"Procedure {proc.name} already defined", proc.location)
                 continue
             self.declared_procedures.add(proc.name)
-            print(f"Adding procedure {proc.name} with parameters {proc.parameters}")
+            # print(f"Adding procedure {proc.name} with parameters {proc.parameters}")
             try:
                 self.symbol_table.add_procedure(proc.name, proc.parameters)
             except ValueError as e:
@@ -50,8 +49,17 @@ class SemanticAnalyzer:
         
         # Finally analyze main program
         self._check_main_program(program.declarations, program.commands)
-        
+        # self.symbol_table.print_table()
+        self.symbol_table.prune_uncalled_procedures()
+        self. program = self.prune_ast(program)
+        self.symbol_table.print_table()
         return len(self.errors) == 0, self.errors, self.symbol_table
+
+    def prune_ast(self, program: Program) -> Program:
+        for proc in program.procedures:
+            if not self.symbol_table.is_procedure(proc.name):
+                program.procedures.remove(proc)
+        
 
     def _check_main_program(self, declarations: List[Declaration], commands: List[Command]) -> None:
         """Check main program declarations and commands."""
@@ -69,7 +77,7 @@ class SemanticAnalyzer:
             self._check_command(cmd)
 
     def _check_procedure(self, proc: Procedure) -> None:
-        """Check procedure body."""
+        """Check procedure declaration and body."""
         # Save current procedure and enter new scope
         prev_procedure = self.current_procedure
         self.current_procedure = proc.name
@@ -79,13 +87,11 @@ class SemanticAnalyzer:
         
         # Save current initialized variables
         prev_initialized = self.initialized_variables.copy()
-        print(f"procedure {proc.name} initialized variables: {self.initialized_variables}")
-        print(f"prev_initialized: {prev_initialized}")
         self.initialized_variables.clear()
         
-        print(f"procedure parameters: {proc.parameters}") 
         # Add parameters to initialized variables and declare them
-        for param_name, is_array in proc.parameters:
+        # Parameters in procedure call are asummed to be initialized
+        for param_name, is_array in list(proc.parameters):
             # Add parameter to symbol table
             try:
                 self.symbol_table.add_symbol(
@@ -94,16 +100,14 @@ class SemanticAnalyzer:
                     is_array=is_array,
                     is_parameter=True
                 )
-                # Mark only the parameter as initialized, not local variables
+                # Mark only the parameter as initialized
                 self.initialized_variables.add(param_name)
             except ValueError as e:
                 self._add_error(str(e), proc.location)
         
-        # Check local declarations but DON'T mark tshem as initialized
+        # Check local declarations but DON'T mark them as initialized
         for decl in proc.declarations:
             self._check_declaration(decl, 'local')
-            # Remove this line - local variables aren't automatically initialized
-            # self.initialized_variables.add(decl.name)
         
         # Check commands
         for cmd in proc.commands:
@@ -159,10 +163,11 @@ class SemanticAnalyzer:
 
     def _check_assignment(self, cmd: Assignment) -> None:
         # Check if target exists
-        print(f"Checking assignment {cmd}")  # Debug
         if not self._check_variable(cmd.target):
             return
+        self.symbol_table.mark_used(cmd.target.name)
 
+        self.symbol_table
         # Check if trying to modify FOR loop iterator
         if cmd.target.name in self.for_loop_iterators:
             self._add_error(
@@ -170,8 +175,8 @@ class SemanticAnalyzer:
                 cmd.location
             )
             return
-
-        self._check_expression(cmd.value)
+        cmd.value = self._check_expression(cmd.value)
+        # self._check_expression(cmd.value)
         self.initialized_variables.add(cmd.target.name)
 
 
@@ -269,7 +274,6 @@ class SemanticAnalyzer:
             return
 
         proc_params = self.symbol_table.get_procedure_params(cmd.name)
-        print(f"Procedure {cmd.name} parameters: {proc_params}")
         if proc_params is None:
             self._add_error(f"Cannot find parameters for procedure '{cmd.name}'", cmd.location)
             return
@@ -330,13 +334,14 @@ class SemanticAnalyzer:
                 # Since parameters are IN-OUT, mark the variable as initialized 
                 # after the procedure call
                 self.initialized_variables.add(arg.name)
+                # self.symbol_table.mark_used(arg.name)
+                
+        # Mark procedure as used
+        self.symbol_table.mark_used(cmd.name)
 
     def _check_variable(self, var: Identifier) -> bool:
         """Check if a variable reference is valid."""
         symbol = self.symbol_table.lookup(var.name)
-        print(f"Checking in _check_variable variable {var.name}")  # Debug
-        print(f"Symbol: {symbol}")  # Debug
-        print(var.array_index)
         if not symbol:
             self._add_error(f"Undefined variable '{var.name}'", var.location)
             return False
@@ -360,7 +365,7 @@ class SemanticAnalyzer:
         return True
 
 
-    def _check_expression(self, expr: Expression) -> None:
+    def _check_expression(self, expr: Expression) -> Expression:
         if isinstance(expr, BinaryOp):
             self._check_value(expr.left)
             self._check_value(expr.right)
@@ -372,22 +377,86 @@ class SemanticAnalyzer:
                         "Division by zero",
                         expr.location
                     )
+                    
+            if expr.operator == '*':
+                
+                if isinstance(expr.left, Number) and isinstance(expr.right, Number):
+                    # Create new Number with the computed value AND location from original expression
+                    return Number(
+                        value=expr.left.value * expr.right.value,
+                        location=expr.location  # Use the BinaryOp's location
+                    )
+                elif isinstance(expr.left, Number):
+                    if expr.left.value == 0:
+                        return Number(value=0, location=expr.location)
+                    if expr.left.value == 1:
+                        return expr.right
+                elif isinstance(expr.right, Number):
+                    if expr.right.value == 0:
+                        return Number(value=0, location=expr.location)
+                    if expr.right.value == 1:
+                        return expr.left
+            
+            elif expr.operator == '+':
+                if isinstance(expr.left, Number) and isinstance(expr.right, Number):
+                    return Number(
+                        value=expr.left.value + expr.right.value,
+                        location=expr.location
+                    )
+                elif isinstance(expr.left, Number):
+                    if expr.left.value == 0:
+                        return expr.right
+                elif isinstance(expr.right, Number):
+                    if expr.right.value == 0:
+                        return expr.left
+                    
+            elif expr.operator == '-':
+                if isinstance(expr.left, Number) and isinstance(expr.right, Number):
+                    return Number(
+                        value=expr.left.value - expr.right.value,
+                        location=expr.location
+                    )
+                elif isinstance(expr.right, Number):
+                    if expr.right.value == 0:
+                        return expr # do nothing
+                elif isinstance(expr.left, Number):
+                    if expr.left.value == 0:
+                        return expr.right
+                    
+            elif expr.operator == '/':
+                if isinstance(expr.left, Number) and isinstance(expr.right, Number):
+                    return Number(
+                        value=expr.left.value // expr.right.value,
+                        location=expr.location
+                    )
+                elif isinstance(expr.right, Number):
+                    if expr.right.value == 1:
+                        return expr.left
+                elif isinstance(expr.left, Number):
+                    if expr.left.value == 0:
+                        return Number(value=0, location=expr.location)
+                    
+                    
+            if expr.operator in ['*', '/', '%']:
+                self.symbol_table.add_costly_operation(expr.operator)
+            
         else:
             self._check_value(expr)
+        return expr
 
     def _check_value(self, value: Value) -> None:
         if isinstance(value, Number):
             return
         elif isinstance(value, Identifier):
             if self._check_variable(value):
-                # Check if variable was initialized
-                print(f"Checking if {value.name} is initialized")  # Debug
+             # Check if variable was initialized 
                 if (value.name not in self.initialized_variables and 
                     not self.symbol_table.is_parameter(value.name)):
                     self._add_error(
                         f"Vaaariable '{value.name}' used before initialization",
                         value.location
                     )
+            self.symbol_table.mark_used(value.name)
     # Add these methods to the SemanticAnalyzer class
 
     def _check_if_statement(self, cmd: IfStatement) -> None:
@@ -479,11 +548,14 @@ class SemanticAnalyzer:
 
     def _check_condition(self, condition: Condition) -> None:
         # Check both sides of the condition
-        self._check_expression(condition.left)
-        self._check_expression(condition.right)
+        condition.left = self._check_expression(condition.left)
+        condition.right = self._check_expression(condition.right)
         
         # Validate condition operator
         valid_operators = ['=', '!=', '<', '>', '<=', '>=']
+        
+        #TODOOPTIMIZE: IF constant values, evaluate the condition
+        
         if condition.operator not in valid_operators:
             self._add_error(
                 f"Invalid comparison operator: {condition.operator}",

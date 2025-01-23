@@ -43,6 +43,21 @@ class CompilerParser:
         source_lines = source_code.splitlines()
         
         def collect_node_errors(node):
+            
+            if str(node).startswith("(MISSING"):
+                line_num = node.start_point[0]
+                missing_token = str(node).split('"')[1]
+                if line_num < len(source_lines):
+                    source_line = source_lines[line_num]
+                    error = SyntaxError(
+                        message=f"Missing token: {missing_token}",
+                        line=line_num + 1,
+                        column=node.start_point[1],
+                        source_line=source_line,
+                        length=1
+                    )
+                    errors.append(error)
+            
             if node.type == 'ERROR':
                 line_num = node.start_point[0]
                 if line_num < len(source_lines):

@@ -105,6 +105,13 @@ class ASTPrinter:
         """Print the relevant attributes of a node."""
         indent_str = ' ' * (indent * self.indent_size)
         
+        
+        if hasattr(node, 'target') and hasattr(node, 'value'):  # For Assignment nodes
+            print(f"{indent_str}target:")
+            self.print_ast(node.target, indent + 1)
+            print(f"{indent_str}value:")
+            self.print_ast(node.value, indent + 1)
+        
         if hasattr(node, 'name'):
             print(f"{indent_str}name: {node.name}")
             
@@ -117,6 +124,10 @@ class ASTPrinter:
         if hasattr(node, 'array_bounds') and node.array_bounds is not None:
             start, end = node.array_bounds
             print(f"{indent_str}array_bounds: [{start}:{end}]")
+            
+        if hasattr(node, 'assignment'):
+            print(f"{' ' * (indent * self.indent_size)}assssssignment:")
+            # self.print_ast(node.assignment, indent + 1)
             
         if hasattr(node, 'parameters'):
             params = [f"{'T ' if is_array else ''}{name}" for name, is_array in node.parameters]
@@ -170,6 +181,7 @@ class ASTPrinter:
         if hasattr(node, 'array_index') and node.array_index is not None:
             print(f"{' ' * (indent * self.indent_size)}array_index:")
             self.print_ast(node.array_index, indent + 1)
+            
             
         # Procedure calls
         if hasattr(node, 'arguments') and node.arguments:

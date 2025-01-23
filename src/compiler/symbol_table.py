@@ -11,7 +11,7 @@ class Symbol:
     is_parameter: bool = False
     is_array_parameter: bool = False
     procedure_name: Optional[str] = None  # For tracking which procedure a symbol belongs to # For tracking which procedure a symbol belongs to
-
+    is_used: bool = False  # For tracking if a symbol is used in the program
 
     def __str__(self) -> str:
         return f"""
@@ -23,6 +23,7 @@ class Symbol:
         Parameter: {self.is_parameter}
         Array Parameter: {self.is_array_parameter}
         Procedure: {self.procedure_name}
+        Is_used: {self.is_used}
         """
         
 class SymbolTable:
@@ -30,6 +31,7 @@ class SymbolTable:
         self.symbols: Dict[str, Symbol] = {}
         self.procedures: Dict[str, List[Tuple[str, bool]]] = {}  # procedure_name -> [(param_name, is_array)]
         self.current_procedure: Optional[str] = None
+        self.costly_operations: Set[str] = set()
         
     def add_procedure(self, name: str, parameters: List[Tuple[str, bool]]) -> None:
         """Add procedure with its parameters."""
@@ -78,7 +80,8 @@ class SymbolTable:
                   array_end: Optional[int] = None,
                   is_parameter: bool = False,
                   is_array_parameter: bool = False,
-                  procedure_name: Optional[str] = None):
+                  procedure_name: Optional[str] = None,
+                  is_used: bool = False) -> None:
         """Add a symbol to the table."""
         # Use current procedure if procedure_name not specified
         effective_procedure = procedure_name if procedure_name is not None else self.current_procedure
@@ -95,11 +98,13 @@ class SymbolTable:
             array_end=array_end,
             is_parameter=is_parameter,
             is_array_parameter=is_array_parameter,
-            procedure_name=effective_procedure
+            procedure_name=effective_procedure,
+            is_used=is_used
         )
-        
-        print(f"Added symbol {full_name} to table")
-        print(self.symbols[full_name])
+    
+    def add_costly_operation(self, name: str):
+        """Add a costly operation to the set."""
+        self.costly_operations.add(name)
         
     def lookup(self, name: str) -> Optional[Symbol]:
         """Look up a symbol, checking both current procedure and global scope."""
@@ -163,6 +168,27 @@ class SymbolTable:
             return start <= index <= end
         return False
     
+    def mark_used(self, name: str):
+        """Mark a symbol as used."""
+        symbol = self.lookup(name)
+        if symbol:
+            symbol.is_used = True
+        else:
+            raise ValueError(f"Symbol {name} not found")
+        
+    def prune_uncalled_procedures(self):
+        for symbol in list(self.symbols.values()):
+            if symbol.symbol_type == 'procedure' and not symbol.is_used:
+                
+                for name, _ in list(self.symbols.items()):
+                    if name.startswith(symbol.name + "_"):
+                        del self.symbols[name]
+                
+                del self.symbols[symbol.name]
+                del self.procedures[symbol.name]
+        
+        
+        
     def print_table(self):
         """Print the symbol table for debugging."""
         print("Symbol table:")
@@ -171,4 +197,5 @@ class SymbolTable:
         print("Procedure table:")
         for name, params in self.procedures.items():
             print(f"  {name}: {params}")
-        print(f"Current procedure: {self.current_procedure}")
+        print("Costly operations:")
+        print(self.costly_operations)
