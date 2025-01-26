@@ -13,9 +13,9 @@ class ArithmeticVars:
     sign1: Variable = Variable("sign1")
     sign2: Variable = Variable("sign2")
     temp: Variable = Variable("temp")
-    zero: Variable = Variable("0", is_const=True)
-    one: Variable = Variable("1", is_const=True)
-    minus_one: Variable = Variable("neg_1", is_const=True)
+    zero: Variable = Variable("0")
+    one: Variable = Variable("1")
+    minus_one: Variable = Variable("-1")
 
 class IRArithmetic:
     """
@@ -24,7 +24,7 @@ class IRArithmetic:
     Properly handles negative numbers.
     """
 
-    def __init__(self, label_manager: LabelManager, symbol_table: SymbolTable,):
+    def __init__(self, label_manager: LabelManager, symbol_table: SymbolTable):
         self.label_manager = label_manager
         self.symbol_table = symbol_table
         self.vars = ArithmeticVars()
@@ -49,16 +49,12 @@ class IRArithmetic:
             except ValueError:
                 pass  # Variable already exists
 
-    def generate_arithmetic_procedures(self, costly_operations: set) -> List[IRInstruction]:
+    def generate_arithmetic_procedures(self) -> List[IRInstruction]:
         """Generate all arithmetic procedures"""
         code = []
-        
         code.extend(self._generate_abs())
-        if "*" in costly_operations:
-            code.extend(self._generate_multiply())
-            
-        if "/" in costly_operations or "%" in costly_operations:
-            code.extend(self._generate_divide())
+        code.extend(self._generate_multiply())
+        code.extend(self._generate_divide())
         return code
 
     def _generate_abs(self) -> List[IRInstruction]:
@@ -327,7 +323,7 @@ class IRArithmetic:
         code.append(IRLabel(label_id=end_label, comment="End multiplication"))
         code.append(
             IRAssign(
-                target=Variable("return"), value=vars.zero, comment="Return from multiply"
+                target=Variable("return"), value=vars.zerp, comment="Return from multiply"
             )
         )
 
@@ -376,7 +372,7 @@ class IRArithmetic:
         )
 
         code.append(
-            IRAssign(target=vars.result, value=vars.zero, comment="Initialize result")
+            IRAssign(target=vars.result, value="0", comment="Initialize result")
         )  # result = 0
         code.append(
             IRAssign(

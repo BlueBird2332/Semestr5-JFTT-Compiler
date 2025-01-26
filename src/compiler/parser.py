@@ -1,10 +1,12 @@
-from tree_sitter import Parser, Language # type: ignore
-import tree_sitter_jftt as jftt
-from pathlib import Path
-from dataclasses import dataclass
-from typing import List, Optional, Tuple
 import os
 import subprocess
+from dataclasses import dataclass
+from pathlib import Path
+from typing import List, Optional, Tuple
+
+import tree_sitter_jftt as jftt
+from tree_sitter import Language, Parser  # type: ignore
+
 
 @dataclass
 class SyntaxError:
@@ -13,6 +15,7 @@ class SyntaxError:
     column: int
     source_line: str
     length: int
+
 
 class CompilerParser:
     def __init__(self):
@@ -24,7 +27,7 @@ class CompilerParser:
 
             language = Language(jftt.language())
             self.parser = Parser(language)
-    
+
         except Exception as e:
             print(f"Error creating parser: {e}")
             raise
@@ -33,7 +36,7 @@ class CompilerParser:
         """Parse code and return the syntax tree along with any errors."""
         if not self.parser:
             raise RuntimeError("Parser not initialized")
-        
+
         tree = self.parser.parse(bytes(code, "utf8"))
         errors = self._collect_errors(tree.root_node, code)
         return tree, errors
@@ -41,9 +44,9 @@ class CompilerParser:
     def _collect_errors(self, node, source_code: str) -> List[SyntaxError]:
         errors = []
         source_lines = source_code.splitlines()
-        
+
         def collect_node_errors(node):
-            
+
             if str(node).startswith("(MISSING"):
                 line_num = node.start_point[0]
                 missing_token = str(node).split('"')[1]
@@ -54,11 +57,11 @@ class CompilerParser:
                         line=line_num + 1,
                         column=node.start_point[1],
                         source_line=source_line,
-                        length=1
+                        length=1,
                     )
                     errors.append(error)
-            
-            if node.type == 'ERROR':
+
+            if node.type == "ERROR":
                 line_num = node.start_point[0]
                 if line_num < len(source_lines):
                     source_line = source_lines[line_num]
@@ -67,10 +70,10 @@ class CompilerParser:
                         line=line_num + 1,
                         column=node.start_point[1],
                         source_line=source_line,
-                        length=len(node.text.decode('utf8'))
+                        length=len(node.text.decode("utf8")),
                     )
                     errors.append(error)
-            
+
             for child in node.children:
                 collect_node_errors(child)
 
@@ -78,7 +81,7 @@ class CompilerParser:
         return errors
 
     def format_error(self, error: SyntaxError) -> str:
-        pointer = ' ' * error.column + '^' * error.length
+        pointer = " " * error.column + "^" * error.length
         return f"""
 Error at line {error.line}, column {error.column}:
 {error.message}
