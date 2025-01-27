@@ -24,30 +24,18 @@ class IRArithmetic:
     Properly handles negative numbers.
     """
 
-    def __init__(self, label_manager: LabelManager, symbol_table: SymbolTable,):
+    def __init__(self, label_manager: LabelManager, variables: dict[str, Variable]):
         self.label_manager = label_manager
-        self.symbol_table = symbol_table
+        self.variables = variables
         self.vars = ArithmeticVars()
         self._init_arithmetic_vars()
+        
+
+                
 
     def _init_arithmetic_vars(self):
-        """Initialize shared variables for arithmetic operations"""
-        # Add shared variables to symbol table
-        for var_name in [
-            self.vars.arg1.name,
-            self.vars.arg2.name,
-            self.vars.result.name,
-            self.vars.result2.name,
-            self.vars.sign1.name,
-            self.vars.sign2.name,
-            self.vars.temp.name,
-        ]:
-            try:
-                self.symbol_table.add_symbol(
-                    name=var_name, symbol_type="global", is_array=False
-                )
-            except ValueError:
-                pass  # Variable already exists
+        for var in self.vars.__dict__.values():
+            self.variables[var.name] = var
 
     def generate_arithmetic_procedures(self, costly_operations: set) -> List[IRInstruction]:
         """Generate all arithmetic procedures"""
@@ -83,7 +71,10 @@ class IRArithmetic:
             LabelType.PROC_END, "End absolute value"
         )
 
-        code.append(IRLabel(label_id=start_label, comment="ABSOLUTE VALUE PROCEDURE"))
+        code.append(IRLabel(label_id=start_label,
+                            label_type=LabelType.PROC_START,
+                            procedure="abs",                            
+                            comment="ABSOLUTE VALUE PROCEDURE"))
 
         # If arg1 >= 0, return arg1
         code.append(
@@ -104,7 +95,9 @@ class IRArithmetic:
         )
         code.append(IRJump(label=if_1_end, comment="Skip negation"))
 
-        code.append(IRLabel(label_id=if_1_else, comment="Negate arg1 if negative"))
+        code.append(IRLabel(label_id=if_1_else,
+                            label_type=LabelType.IF_ELSE,
+                            comment="Negate arg1 if negative"))
 
         # Negate arg1 if negative
         code.append(
@@ -125,7 +118,9 @@ class IRArithmetic:
             )
         )
 
-        code.append(IRLabel(label_id=if_1_end, comment="End absolute value for arg1"))
+        code.append(IRLabel(label_id=if_1_end, 
+                            label_type=LabelType.IF_END,
+                            comment="End absolute value for arg1"))
 
         # If arg2 >= 0, return arg2
         code.append(
@@ -146,7 +141,9 @@ class IRArithmetic:
         )
         code.append(IRJump(label=if_2_end, comment="Skip negation"))
 
-        code.append(IRLabel(label_id=if_2_else, comment="Negate arg2 if negative"))
+        code.append(IRLabel(label_id=if_2_else, 
+                            label_type=LabelType.IF_ELSE,
+                            comment="Negate arg2 if negative"))
 
         # Negate arg2 if negative
         code.append(
@@ -183,9 +180,14 @@ class IRArithmetic:
         #     )
         # )
 
-        code.append(IRLabel(label_id=if_2_end, comment="End absolute value for arg2"))
+        code.append(IRLabel(label_id=if_2_end, 
+                            label_type=LabelType.IF_END,
+                            comment="End absolute value for arg2"))
 
-        code.append(IRLabel(label_id=end_label, comment="End absolute value"))
+        code.append(IRLabel(label_id=end_label, 
+                            label_type=LabelType.PROC_END,
+                            procedure="abs",
+                            comment="End absolute value"))
         code.append(
             IRAssign(target=Variable("return"), value=vars.zero, comment="Return from abs")
         )
@@ -212,7 +214,10 @@ class IRArithmetic:
         if_end_label = self.label_manager.new_label(LabelType.IF_END, "")
         end_label = self.label_manager.new_label(LabelType.PROC_END, "Multiply end")
 
-        code.append(IRLabel(label_id=start_label, comment="MULTIPLY PROCEDURE"))
+        code.append(IRLabel(label_id=start_label, 
+                            label_type=LabelType.PROC_START,
+                            procedure="multiply",                            
+                            comment="MULTIPLY PROCEDURE"))
         code.append(
             IRProcCall(
                 name="abs",
@@ -226,7 +231,9 @@ class IRArithmetic:
             IRAssign(target=Variable("result"), value=vars.zero, comment="Initialize result")
         )
 
-        code.append(IRLabel(label_id=while_label, comment="Main multiplication loop"))
+        code.append(IRLabel(label_id=while_label,
+                            label_type=LabelType.WHILE_START,
+                            comment="Main multiplication loop"))
         code.append(
             IRCondJump(
                 left=vars.arg2,
@@ -237,7 +244,9 @@ class IRArithmetic:
             )
         )
         code.append(IRJump(label=end_while_label, comment="Exit multiplication loop"))
-        code.append(IRLabel(label_id=if_help_label, comment="Helper if statement"))
+        code.append(IRLabel(label_id=if_help_label, 
+                            label_type=LabelType.IF_HELPER,
+                            comment="Helper if statement"))
 
         code.append(
             IRAssign(
@@ -283,7 +292,9 @@ class IRArithmetic:
             )
         )
 
-        code.append(IRLabel(label_id=if_end_label, comment="If end statement"))
+        code.append(IRLabel(label_id=if_end_label,
+                            label_type=LabelType.IF_END,
+                            comment="If end statement"))
         code.append(
             IRBinaryOp(
                 target=vars.arg1,
@@ -297,7 +308,9 @@ class IRArithmetic:
         code.append(IRHalf(target=vars.arg2, comment="Halve the multiplier"))
         code.append(IRJump(label=while_label, comment="Continue multiplication loop"))
         code.append(
-            IRLabel(label_id=end_while_label, comment="End of main multiplication loop")
+            IRLabel(label_id=end_while_label, 
+                    label_type=LabelType.WHILE_END,
+                    comment="End of main multiplication loop")
         )
 
         # Apply sign to result
@@ -324,7 +337,10 @@ class IRArithmetic:
             )
         )
 
-        code.append(IRLabel(label_id=end_label, comment="End multiplication"))
+        code.append(IRLabel(label_id=end_label,
+                            procedure="multiply",
+                            label_type=LabelType.PROC_END,                            
+                            comment="End multiplication"))
         code.append(
             IRAssign(
                 target=Variable("return"), value=vars.zero, comment="Return from multiply"
@@ -366,7 +382,10 @@ class IRArithmetic:
             LabelType.PROC_END, "Division procedure end"
         )
 
-        code.append(IRLabel(label_id=start_label, comment="DIVISION PROCEDURE"))
+        code.append(IRLabel(label_id=start_label, 
+                            label_type=LabelType.PROC_START,
+                            procedure="divide",
+                            comment="DIVISION PROCEDURE"))
         code.append(
             IRProcCall(
                 name="abs",
@@ -391,7 +410,9 @@ class IRArithmetic:
             )
         )  # power = 1
 
-        code.append(IRLabel(label_id=power_while_label, comment="Divisor power loop"))
+        code.append(IRLabel(label_id=power_while_label, 
+                            label_type=LabelType.WHILE_START,
+                            comment="Divisor power loop"))
         code.append(
             IRCondJump(
                 left=vars.arg2,
@@ -426,10 +447,14 @@ class IRArithmetic:
             IRJump(label=power_while_label, comment="Continue divisor power loop")
         )
         code.append(
-            IRLabel(label_id=end_power_while_label, comment="End of divisor power loop")
+            IRLabel(label_id=end_power_while_label, 
+                    label_type=LabelType.WHILE_END,
+                    comment="End of divisor power loop")
         )
 
-        code.append(IRLabel(label_id=divide_while_label, comment="Division loop"))
+        code.append(IRLabel(label_id=divide_while_label, 
+                            label_type=LabelType.WHILE_START,
+                            comment="Division loop"))
         code.append(
             IRCondJump(
                 left=vars.arg1,
@@ -442,7 +467,9 @@ class IRArithmetic:
         code.append(IRJump(label=end_divide_while_label, comment="Exit division loop"))
         code.append(
             IRLabel(
-                label_id=divide_while_helper_label, comment="Helper for division loop"
+                label_id=divide_while_helper_label, 
+                label_type=LabelType.WHILE_HELPER,
+                comment="Helper for division loop"
             )
         )
 
@@ -477,7 +504,9 @@ class IRArithmetic:
         )
 
         code.append(
-            IRLabel(label_id=if_end_divisor_loop_label, comment="End of divisor loop")
+            IRLabel(label_id=if_end_divisor_loop_label, 
+                    label_type=LabelType.IF_END,
+                    comment="End of divisor loop")
         )
 
         code.append(IRHalf(target=vars.arg1, comment="Halve the power"))
@@ -486,7 +515,9 @@ class IRArithmetic:
 
         code.append(IRJump(label=divide_while_label, comment="Continue division loop"))
         code.append(
-            IRLabel(label_id=end_divide_while_label, comment="End of division loop")
+            IRLabel(label_id=end_divide_while_label, 
+                    label_type=LabelType.WHILE_END,
+                    comment="End of division loop")
         )
 
         # Apply sign to result
@@ -517,7 +548,9 @@ class IRArithmetic:
         )
 
         code.append(
-            IRLabel(label_id=if_remainder, comment="Check if remainder is negative")
+            IRLabel(label_id=if_remainder, 
+                    label_type=LabelType.IF_ELSE,
+                    comment="Check if remainder is negative")
         )
         code.append(
             IRCondJump(
@@ -539,7 +572,10 @@ class IRArithmetic:
             )
         )
 
-        code.append(IRLabel(label_id=end_label, comment="End division"))
+        code.append(IRLabel(label_id=end_label,
+                            label_type=LabelType.PROC_END,
+                            procedure="divide",
+                            comment="End division"))
         code.append(
             IRAssign(target=Variable("return"), value=vars.zero, comment="Return from divide")
         )

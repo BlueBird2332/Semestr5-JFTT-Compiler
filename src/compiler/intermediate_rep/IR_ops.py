@@ -18,45 +18,102 @@ class LabelType(Enum):
     PROC_START = auto()
     PROC_END = auto()
     MAIN_START = auto()
-
+    
 @dataclass
 class Variable:
-    """Represents a variable in intermediate representation"""
+    """Enhanced variable representation for IR"""
     name: str
     proc_name: Optional[str] = None
+    # Variable type flags
     is_temp: bool = False
     is_const: bool = False
+    const_value: Optional[int] = None
+    is_array: bool = False
+    is_param: bool = False
+    is_array_param: bool = False  # For 'T' parameters
+    
+    # Array info
+    array_start: Optional[int] = None
+    array_size: Optional[int] = None  # end - start + 1
+    
+    # For arrays passed as parameters
+    array_base_ref: Optional['Variable'] = None  # Reference to original array
+    array_start_ref: Optional['Variable'] = None  # Reference to start index
     
     def __str__(self) -> str:
-        if self.is_const:
-            return f"num_{self.name}"
-        if self.proc_name and not self.is_temp:
-            return f"{self.proc_name}_{self.name}"
+        """String representation for IR code generation"""
+
         return self.name
     
     def print_full(self) -> str:
+        """Detailed string representation for debugging"""
+        parts = []
         if self.is_const:
-            return f"num_{self.name}"
-        if self.proc_name:
-            return f"{self.proc_name}_{self.name}"
-        return self.name
+            parts.append("const")
+        if self.const_value is not None:
+            parts.append(f"value={self.const_value}")
+        if self.is_temp:
+            parts.append("temp")
+        if self.is_array:
+            parts.append(f"array[{self.array_start}:{self.array_start + self.array_size - 1}]")
+        if self.is_param:
+            parts.append("param")
+        if self.is_array_param:
+            parts.append("array_param")
+            
+        return f"{str(self)} ({', '.join(parts)})"
     
     @staticmethod
     def create_temp(temp_name: str, proc_name: Optional[str] = None) -> 'Variable':
-        return Variable(name=temp_name, proc_name=proc_name, is_temp=True)
+        return Variable(
+            name=temp_name,
+            proc_name=proc_name,
+            is_temp=True
+        )
     
     @staticmethod
-    def from_symbol(name: str, proc_name: Optional[str] = None) -> 'Variable':
-        return Variable(name=name, proc_name=proc_name)
-    
-    @staticmethod
-    def from_number(value: int) -> 'Variable':
-        value = int(value)
-        if value < 0:
-            return Variable(name="neg" + str(abs(value)), is_const=True)
+    def create_array(name: str, start: int, size: int, proc_name: Optional[str] = None) -> 'Variable':
+        return Variable(
+            name=name,
+            proc_name=proc_name,
+            is_array=True,
+            array_start=start,
+            array_size=size
+        )
         
-        return Variable(name=str(abs(value)), is_const=True)
-
+    @staticmethod
+    def create_param(name: str, proc_name: str) -> 'Variable':
+        return Variable(name=name, proc_name=proc_name, is_param=True)
+    
+    @staticmethod
+    def create_array_param(name: str, proc_name: str, base_ref: 'Variable', start_ref: 'Variable') -> 'Variable':
+        return Variable(
+            name=name,
+            proc_name=proc_name,
+            is_param=True,
+            is_array_param=True,
+            array_base_ref=base_ref,
+            array_start_ref=start_ref
+        )
+        
+    @staticmethod
+    def from_number(value: str) -> 'Variable':
+        """Create constant variable"""
+        name = str(value)
+        return Variable(name=name, is_const=True, const_value=int(value))
+    
+    @staticmethod
+    def from_symbol(symbol: Symbol, proc_name: Optional[str] = None) -> 'Variable':
+        """Create variable from symbol"""
+        if symbol.is_array:
+            return Variable.create_array(
+                name=symbol.name,
+                start=symbol.array_start,
+                size=symbol.array_end - symbol.array_start + 1,
+                proc_name=proc_name
+            )
+        return Variable(name=symbol.name, proc_name=proc_name)
+    
 class LabelManager:
     """Manages label creation and tracking"""
     def __init__(self):
@@ -107,7 +164,7 @@ class IRHalf(IRInstruction):
     target: Variable
     
     def __str__(self) -> str:
-        return f"{self.target} := {self.target} / 2"
+        return f"Half {self.target}"
     
     def print_full(self) -> str:
         return f"{self.target.print_full()} := {self.target} / 2 {f'# {self.comment}' if self.comment else ''}"
@@ -132,9 +189,11 @@ class IRBinaryOp(IRInstruction):
 @dataclass
 class IRLabel(IRInstruction):
     label_id: int
+    label_type: LabelType
+    procedure: Optional[str] = None
     
     def __str__(self) -> str:
-        return f"L{self.label_id}: {f'# {self.comment}' if self.comment else ''}"
+        return f"L{self.label_id}: {self.label_type.name} + {self.procedure}"
     
     def print_full(self) -> str:
         return f"L{self.label_id}: {f'# {self.comment}' if self.comment else ''}"
@@ -142,6 +201,7 @@ class IRLabel(IRInstruction):
 @dataclass
 class IRJump(IRInstruction):
     label: int
+
     
     def __str__(self) -> str:
         return f"goto L{self.label}"

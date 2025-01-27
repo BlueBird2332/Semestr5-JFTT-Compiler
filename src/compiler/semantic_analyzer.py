@@ -52,7 +52,6 @@ class SemanticAnalyzer:
         # self.symbol_table.print_table()
         self.symbol_table.prune_uncalled_procedures()
         self.program = self.prune_ast(program)
-        self.symbol_table.print_table()
         return len(self.errors) == 0, self.errors, self.symbol_table
 
     def prune_ast(self, program: Program) -> Program:

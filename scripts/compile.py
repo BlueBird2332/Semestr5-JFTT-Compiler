@@ -7,7 +7,11 @@ from compiler.intermediate_rep.IR_generator import IRGenerator
 from compiler.parser import CompilerParser
 from compiler.semantic_analyzer import SemanticAnalyzer
 from compiler.utils import *
+from compiler.pre_assembler.memory_map import MemoryMap
+from compiler.vm_compiler.vm_code_generator import VMCodeGenerator
 
+
+from compiler.pre_assembler.memory_map import *
 
 def format_error(message: str, line: int, column: int, source_lines: list[str]) -> str:
     source_line = source_lines[line - 1] if line <= len(source_lines) else ""
@@ -82,7 +86,7 @@ def main():
         print("Semantic analysis completed successfully!")
         sys.exit(0)
 
-    print_ast(ast)
+    # print_ast(ast)
 
     # At this point we have:
     # - Valid AST in 'ast'
@@ -91,14 +95,25 @@ def main():
 
     print("Compilation successful!")
     tac_gen = IRGenerator(symbol_table)
-    ir = tac_gen.generate(ast)
-    for item in ir:
-        # print(item.print_full())
-        print(item)
+    ir, vars = tac_gen.generate(ast)
+    # for item in ir:
+    #     # print(item.print_full())
+    #     print(item)
 
     with open("IR_file", "w+") as f:
         for item in ir:
             f.write(item.print_full() + "\n")
+            
+    mem_manager = MemoryMap(vars)
+    mem_manager.print_map()
+    
+    code_gen = VMCodeGenerator(mem_manager)
+    code = code_gen.generate(ir)
+    for item in code:
+        print(item)
+    
+    # mem_map = mem_manager.assign_memory(ir)
+    # mem_manager.print_memory_map()
 
     # Generate VM code
     # success, code = vm_compiler.compile(ast, symbol_table, output_file)

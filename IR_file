@@ -1,117 +1,117 @@
 L1: # ABSOLUTE VALUE PROCEDURE
-if arg1 < num_0 goto L2 # Skip negation if positive
-sign1 := num_1 
+if arg1 () < 0 (const) goto L2 # Skip negation if positive
+sign1 () := 1 (const) 
 goto L3 # Skip negation
 L2: # Negate arg1 if negative
-arg1 := num_0 - arg1 # Negate negative value
-sign1 := num_neg_1 # Set sign of arg1 to negative
+arg1 () := 0 (const) - arg1 () # Negate negative value
+sign1 () := neg_1 (const) # Set sign of arg1 to negative
 L3: # End absolute value for arg1
-if arg2 < num_0 goto L4 # Skip negation if positive
-sign2 := num_1 
+if arg2 () < 0 (const) goto L4 # Skip negation if positive
+sign2 () := 1 (const) 
 goto L5 # Skip negation
 L4: # Negate arg2 if negative
-arg2 := num_0 - arg2 # Negate negative value
-sign2 := num_neg_1 # Set sign of arg2 to negative
-sign1 := sign1 - sign2 # Compute final sign, sign of expression is stored in sign1
+arg2 () := 0 (const) - arg2 () # Negate negative value
+sign2 () := neg_1 (const) # Set sign of arg2 to negative
+sign1 () := sign1 () - sign2 () # Compute final sign, sign of expression is stored in sign1
 L5: # End absolute value for arg2
 L6: # End absolute value
-return := num_0 # Return from abs
+return () := 0 (const) # Return from abs
 L7: # MULTIPLY PROCEDURE
 call abs() # Compute absolute values and store expression sign in sign1
-result := num_0 # Initialize result
+result () := 0 (const) # Initialize result
 L8: # Main multiplication loop
-if arg2 > num_0 goto L10 # Whlie multiplier is greater than 0
+if arg2 () > 0 (const) goto L10 # Whlie multiplier is greater than 0
 goto L9 # Exit multiplication loop
 L10: # Helper if statement
-temp := arg2 # Hold arg2 for halving
-temp := temp / 2 # Halve arg2
-temp := temp + temp # Add temp to check modularity
-temp := temp - temp # Subtract temp from arg2
-if temp = num_0 goto L12 # Check if arg2 is odd
-result := result + arg1 # Add multiplicand to result
+temp () := arg2 () # Hold arg2 for halving
+temp () := temp / 2 # Halve arg2
+temp () := temp () + temp () # Add temp to check modularity
+temp () := temp () - temp () # Subtract temp from arg2
+if temp () = 0 (const) goto L12 # Check if arg2 is odd
+result () := result () + arg1 () # Add multiplicand to result
 L12: # If end statement
-arg1 := arg1 + arg1 # Double the multiplicand
-arg2 := arg2 / 2 # Halve the multiplier
+arg1 () := arg1 () + arg1 () # Double the multiplicand
+arg2 () := arg2 / 2 # Halve the multiplier
 goto L8 # Continue multiplication loop
 L9: # End of main multiplication loop
-if sign1 = num_1 goto L13 # Check if sign is negative
-result := num_0 - result # Negate result
+if sign1 () = 1 (const) goto L13 # Check if sign is negative
+result () := 0 (const) - result () # Negate result
 L13: # End multiplication
-return := num_0 # Return from multiply
+return () := 0 (const) # Return from multiply
 L15: # DIVISION PROCEDURE
 call abs() # Compute absolute values and store expression sign in sign1
-result := num_0 # Initialize result
-result2 := arg1 # Initialize remainder
-arg1 := num_1 # Initialize power of divisor
+result () := 0 (const) # Initialize result
+result2 () := arg1 () # Initialize remainder
+arg1 () := 1 (const) # Initialize power of divisor
 L16: # Divisor power loop
-if arg2 > result2 goto L17 # Check if divisor is greater than remainder
-arg2 := arg2 + arg2 # Double the divisor
-arg1 := arg1 + arg1 # Double the power
+if arg2 () > result2 () goto L17 # Check if divisor is greater than remainder
+arg2 () := arg2 () + arg2 () # Double the divisor
+arg1 () := arg1 () + arg1 () # Double the power
 goto L16 # Continue divisor power loop
 L17: # End of divisor power loop
 L18: # Division loop
-if arg1 > num_0 goto L19 # Check if remainder is greater than 0
+if arg1 () > 0 (const) goto L19 # Check if remainder is greater than 0
 goto L20 # Exit division loop
 L19: # Helper for division loop
-if result2 < arg2 goto L21 # Check if remainder is greater than 0
-result2 := result2 - arg2 # Subtract divisor from remainder
-result := result + arg1 # Add power to result
+if result2 () < arg2 () goto L21 # Check if remainder is greater than 0
+result2 () := result2 () - arg2 () # Subtract divisor from remainder
+result () := result () + arg1 () # Add power to result
 L21: # End of divisor loop
-arg1 := arg1 / 2 # Halve the power
-arg2 := arg2 / 2 # Halve the divisor
+arg1 () := arg1 / 2 # Halve the power
+arg2 () := arg2 / 2 # Halve the divisor
 goto L18 # Continue division loop
 L20: # End of division loop
-if sign1 = num_1 goto L24 # Check if sign is negative
-result := num_0 - result # Negate result
+if sign1 () = 1 (const) goto L24 # Check if sign is negative
+result () := 0 (const) - result () # Negate result
 L24: # Check if remainder is negative
-if sign2 = num_1 goto L22 # Check if remainder is 0
-result2 := num_0 - result2 # Negate remainder
+if sign2 () = 1 (const) goto L22 # Check if remainder is 0
+result2 () := 0 (const) - result2 () # Negate remainder
 L22: # End division
-return := num_0 # Return from divide
+return () := 0 (const) # Return from divide
 L25: # PROC_START: DE PROCEDURE
-de_a := de_m # Simple assignment
-de_b := de_n # Simple assignment
-de_x := num_1 # Simple assignment
-de_y := num_0 # Simple assignment
-de_r := de_n # Simple assignment
-de_s := de_m - num_1 # Assignment with -
+de_a () := de_m (param) # Simple assignment
+de_b () := de_n (param) # Simple assignment
+de_x (param) := 1 (const) # Simple assignment
+de_y (param) := 0 (const) # Simple assignment
+de_r () := de_n (param) # Simple assignment
+de_s () := de_m (param) - 1 (const) # Assignment with -
 L26: # WHILE_START: while loop start in proc de
-if de_b > num_0 goto L28 # Exit loop if condition is false
+if de_b () > 0 (const) goto L28 # Exit loop if condition is false
 goto L27 # Jump to end of while loop
 L28: # WHILE_HELPER: while loop helper for condition evaluation
-de_reszta := de_a % de_b # Optimized % operation
-de_iloraz := de_a / de_b # Optimized / operation
-de_a := de_b # Simple assignment
-de_b := de_reszta # Simple assignment
-de_rr := de_r # Simple assignment
-de_tmp := de_iloraz * de_r # Optimized * operation
-if de_x < de_tmp goto L29 # Jump to else if condition is true
+de_reszta () := de_a () % de_b () # Optimized % operation
+de_iloraz () := de_a () / de_b () # Optimized / operation
+de_a () := de_b () # Simple assignment
+de_b () := de_reszta () # Simple assignment
+de_rr () := de_r () # Simple assignment
+de_tmp () := de_iloraz () * de_r () # Optimized * operation
+if de_x (param) < de_tmp () goto L29 # Jump to else if condition is true
 goto L30 # Skip else block
 L29: # IF_ELSE: else branch in proc de
-de_r := de_n * de_iloraz # Optimized * operation
+de_r () := de_n (param) * de_iloraz () # Optimized * operation
 L30: # IF_END: end of if in proc de
-de_r := de_r + de_x # Assignment with +
-de_r := de_r - de_tmp # Assignment with -
-de_ss := de_s # Simple assignment
-de_tmp := de_iloraz * de_s # Optimized * operation
-if de_y > de_tmp goto L31 # Jump to else if condition is true
-de_s := de_m * de_iloraz # Optimized * operation
+de_r () := de_r () + de_x (param) # Assignment with +
+de_r () := de_r () - de_tmp () # Assignment with -
+de_ss () := de_s () # Simple assignment
+de_tmp () := de_iloraz () * de_s () # Optimized * operation
+if de_y (param) > de_tmp () goto L31 # Jump to else if condition is true
+de_s () := de_m (param) * de_iloraz () # Optimized * operation
 goto L32 # Skip else block
 L31: # IF_ELSE: else branch in proc de
-de_s := num_0 # Simple assignment
+de_s () := 0 (const) # Simple assignment
 L32: # IF_END: end of if in proc de
-de_s := de_s + de_y # Assignment with +
-de_s := de_s - de_tmp # Assignment with -
-de_x := de_rr # Simple assignment
-de_y := de_ss # Simple assignment
+de_s () := de_s () + de_y (param) # Assignment with +
+de_s () := de_s () - de_tmp () # Assignment with -
+de_x (param) := de_rr () # Simple assignment
+de_y (param) := de_ss () # Simple assignment
 goto L26 # Jump back to start of while loop
 L27: # WHILE_END: while loop end in proc de
-de_z := de_a # Simple assignment
-return := num_0 # End of procedure de
+de_z (param) := de_a () # Simple assignment
+return () := 0 (const) # End of procedure de
 L33: # MAIN_START: Main program start
-read m # Read value into m
-read n # Read value into n
-call de(m, n, x, y, nwd, g) # Call procedure de
-write x # Write value x
-write y # Write value y
-write nwd # Write value nwd
+read m () # Read value into m
+read n () # Read value into n
+call de(m (), n (), x (), y (), nwd (), g ()) # Call procedure de
+write x () # Write value x
+write y () # Write value y
+write nwd () # Write value nwd
