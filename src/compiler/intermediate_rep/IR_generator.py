@@ -8,6 +8,12 @@ from .arithmetic import IRArithmetic
 from .IR_ops import *
 
 
+@dataclass
+class ProcInfo:
+    begin_id: int
+    arguments: List[str]
+    return_var: Variable
+
 class IRGenerator:
     def __init__(self, symbol_table: SymbolTable):
         self.symbol_table = symbol_table
@@ -20,6 +26,7 @@ class IRGenerator:
         self.dummy_loc = Location(0, 0)
         self.variables: dict[str, Variable] = dict()
         self.arithmetic = IRArithmetic(self.label_manager, self.variables)
+        self.proc_info: Dict[str, ProcInfo] = dict()
 
     
     def create_variable(self, name: Union[str, int],
@@ -37,12 +44,7 @@ class IRGenerator:
         
         # var_name = f"{self.current_proc}_{name}" if self.current_proc and not name.startswith('t') else name
         var_name = str(name)
-        if name == "i":
-            print(self.current_proc)
         if self.current_proc and not var_name.startswith(self.current_proc) and not is_const:
-            if name == "i":
-                print("HERE")
-                print
             var_name = f"{self.current_proc}_{name}"
             
         if var_name not in self.variables:
@@ -87,6 +89,16 @@ class IRGenerator:
         """Generate IR for entire program"""
         self.code = []
 
+        
+        main_label = self.label_manager.new_label(
+            LabelType.MAIN_START, "Main program start"
+        )
+        
+        self.proc_info['main'] = ProcInfo(
+            begin_id=main_label,
+            arguments=[],
+            return_var=None
+        )
 
         # Generate arithmetic procedures      
     
@@ -98,9 +110,9 @@ class IRGenerator:
         for proc in node.procedures:
             self._generate_procedure(proc)
         
-        zero_var = self.create_variable(0, is_const=True)
-        one_var = self.create_variable(1, is_const=True)
-        neg_one_var = self.create_variable(-1, is_const=True)
+        # zero_var = self.create_variable(0, is_const=True)
+        # one_var = self.create_variable(1, is_const=True)
+        # neg_one_var = self.create_variable(-1, is_const=True)
         
 
         # Generate code for main program
@@ -135,13 +147,14 @@ class IRGenerator:
         # for k,v in self.variables.items():
         #     print(f"Key: {k}, Value: {v.print_full()}")
             
-        return self.code, self.variables
+        return self.code, self.variables, self.proc_info
         
     def _generate_procedure(self, proc: Procedure) -> None:
         """Generate IR for procedure definition"""
         
               
         self.current_proc = proc.name
+        
         
         
         proc_label = self.label_manager.new_label(
@@ -156,28 +169,32 @@ class IRGenerator:
             )
         )
 
-        self.process_parameters(proc.name, proc.parameters)
+        self.process_parameters(proc.name, proc.parameters, start_id=proc_label)
         self.process_declarations(proc.declarations, proc.name)
 
         # Generate procedure body
         for cmd in proc.commands:
             self._generate_command(cmd)
 
-        zero_var = self.create_variable(0, is_const=True)
+        # zero_var = self.create_variable(0, is_const=True)
+        # self.code.append(
+        #     IRAssign(
+        #         target=Variable("return"),
+        #         value=zero_var,
+        #         comment=f"End of procedure {proc.name}",
+        #     )
+        # )
         self.code.append(
-            IRAssign(
-                target=Variable("return"),
-                value=zero_var,
-                comment=f"End of procedure {proc.name}",
-            )
+            IRReturn(procedure=self.current_proc, comment=f"End of procedure {proc.name}")
         )
         self.current_proc = None
         
     def process_declarations(self, declarations: List[Declaration], proc_name: Optional[str] = None) -> None:
         """Process declarations and register variables"""
+        
         for decl in declarations:
             if self.current_proc:
-                decl.name = self.current_proc + "_" + decl.name
+                decl.name = self.current_proc + "#" + decl.name
             if decl.array_bounds:
                 # Create array variable
                 start, end = decl.array_bounds
@@ -194,7 +211,6 @@ class IRGenerator:
                     name=start,
                     is_const=True
                 )
-                
                 # Create array start reference variable
                 start_ref = self.create_variable(
                     name=f"{decl.name}_start",
@@ -211,13 +227,17 @@ class IRGenerator:
                 )
             else:
                 # Create regular variable
-                self.create_variable(
+                var = self.create_variable(
                     name=decl.name,
                     proc_name=proc_name
                 )
 
-    def process_parameters(self, proc_name: str, parameters: List[Tuple[str, bool]]) -> None:
+            
+
+    def process_parameters(self, proc_name: str, parameters: List[Tuple[str, bool]], start_id = None) -> None:
         """Process procedure parameters and register parameter variables"""
+        vars = []
+        
         for param_name, is_array in parameters:
             if self.current_proc:
                 param_name = self.current_proc + "_" + param_name
@@ -229,20 +249,28 @@ class IRGenerator:
                     is_param=True,
                     is_array_param=True
                 )
-                
+                vars.append(param_var)
                 # Create start index reference for array parameter
                 start_ref = self.create_variable(
-                    name=f"{param_name}_start",
+                    name=f"{param_name}#start",
                     proc_name=proc_name,
                     is_param=True
                 )
+                vars.append(start_ref)
             else:
                 # Create regular parameter variable
-                self.create_variable(
+                var =  self.create_variable(
                     name=param_name,
                     proc_name=proc_name,
                     is_param=True
                 )
+                vars.append(var)
+                
+        self.proc_info[self.current_proc] = ProcInfo(
+            begin_id=start_id,
+            arguments=vars,
+            return_var=self.create_variable(name = f"{proc_name}#return", proc_name=proc_name)
+        )
         
 
     def _generate_command(self, cmd: Command) -> None:
@@ -409,13 +437,13 @@ class IRGenerator:
 
         # invert condition for ">=" and "<=" and "=="
 
-        if cmd.condition.operator in [">=", "<=", "="]:
+        if cmd.condition.operator in [">=", "<=", "!="]:
             if cmd.condition.operator == ">=":
                 cmd.condition.operator = "<"
             elif cmd.condition.operator == "<=":
                 cmd.condition.operator = ">"
-            elif cmd.condition.operator == "=":
-                cmd.condition.operator = "!="
+            elif cmd.condition.operator == "!=":
+                cmd.condition.operator = "="
 
             self.code.append(
                 IRCondJump(
@@ -462,7 +490,7 @@ class IRGenerator:
                     comment="Jump to else if condition is true",
                 )
             )
-
+        
             if cmd.else_block:
                 for else_cmd in cmd.else_block:
                     self._generate_command(else_cmd)
@@ -629,7 +657,6 @@ class IRGenerator:
 
         # Initialize loop variable
         iterator = self.create_variable(cmd.iterator)
-        print(f"ITERATOR: {iterator.name}")
         start_val = self._generate_value(cmd.start)
         end_val = self._generate_value(cmd.end)
 
@@ -811,35 +838,3 @@ class IRGenerator:
         value = self._generate_value(cmd.value)
         self.code.append(IRWrite(value=value, comment=f"Write value {value}"))
 
-
-    def _handle_array_declaration(self, name: str, start: int, end: int) -> None:
-        """Generate code for array declaration"""
-        # Create array variable
-        array_var = self.create_variable(
-            name=name,
-            proc_name=self.current_proc,
-            is_array=True,
-            array_start=start,
-            array_size=end-start+1
-        )
-        
-        # Create and store start index variable
-        start_var = self.create_variable(
-            name=f"{name}_start",
-            proc_name=self.current_proc
-        )
-        
-        # Create constant for start index
-        start_const = self.create_variable(
-            name=start,
-            is_const=True
-        )
-        
-        # Store array start index
-        self.code.append(
-            IRAssign(
-                target=start_var,
-                value=start_const,
-                comment=f"Store array {name} start index"
-            )
-        )

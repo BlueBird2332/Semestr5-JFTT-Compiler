@@ -1,0 +1,9 @@
+PROGRAM IS
+    a,b,c
+BEGIN
+    READ a;
+    IF a=3 THEN
+        WRITE 238792;
+    ENDIF
+
+END

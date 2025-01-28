@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
+from ..intermediate_rep.IR_ops import Variable
 
 @dataclass
 class MemoryCell:
@@ -92,7 +93,10 @@ class MemoryMap:
             
     def get_address(self, var_name: str) -> Optional[int]:
         """Get memory address for a variable"""
+        # print(f"Getting address for {var_name}")
+
         if var_name in self.memory:
+            # print(f"Returning {self.memory[var_name].address}")
             return self.memory[var_name].address
         return None
         

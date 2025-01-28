@@ -6,16 +6,16 @@ from .IR_ops import *
 @dataclass
 class ArithmeticVars:
     """Container for arithmetic variables"""
-    arg1: Variable = Variable("arg1")
-    arg2: Variable = Variable("arg2")
-    result: Variable = Variable("result")
-    result2: Variable = Variable("result2")  # Used for remainder in division
-    sign1: Variable = Variable("sign1")
-    sign2: Variable = Variable("sign2")
+    # arg1: Variable = Variable("arg1")
+    # arg2: Variable = Variable("arg2")
+    # result: Variable = Variable("result")
+    # result2: Variable = Variable("result2")  # Used for remainder in division
+    # sign1: Variable = Variable("sign1")
+    # sign2: Variable = Variable("sign2")
     temp: Variable = Variable("temp")
-    zero: Variable = Variable("0", is_const=True)
-    one: Variable = Variable("1", is_const=True)
-    minus_one: Variable = Variable("neg_1", is_const=True)
+    # zero: Variable = Variable("0", is_const=True, const_value=0)
+    # one: Variable = Variable("1", is_const=True, const_value=1)
+    # minus_one: Variable = Variable("-1", is_const=True, const_value=-1)
 
 class IRArithmetic:
     """

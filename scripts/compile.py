@@ -31,15 +31,15 @@ def main():
     parser.add_argument(
         "--semantic-only", action="store_true", help="Only perform semantic analysis"
     )
+    parser.add_argument("output_file", help="Output file")
     args = parser.parse_args()
+    
 
     # Initialize compiler components
     compiler = CompilerParser()
     ast_builder = ASTBuilder()
     semantic_analyzer = SemanticAnalyzer()
     # vm_compiler = VMCompiler()
-
-    output_file = args.file.replace(".txt", ".vm")
 
     try:
         # Read source file
@@ -93,24 +93,38 @@ def main():
     # - Symbol table in 'symbol_table'
     # - No syntax or semantic errors
 
-    print("Compilation successful!")
+    # print("Compilation successful!")
     tac_gen = IRGenerator(symbol_table)
-    ir, vars = tac_gen.generate(ast)
+    ir, vars, proc_info = tac_gen.generate(ast)
     # for item in ir:
     #     # print(item.print_full())
     #     print(item)
 
-    with open("IR_file", "w+") as f:
+    with open("IR_file", "w") as f:
         for item in ir:
             f.write(item.print_full() + "\n")
             
     mem_manager = MemoryMap(vars)
-    mem_manager.print_map()
+    # mem_manager.print_map()
     
-    code_gen = VMCodeGenerator(mem_manager)
-    code = code_gen.generate(ir)
-    for item in code:
+    for item in ir:
         print(item)
+    
+    # for k,v in proc_info.items():
+    #     print(f"Proc: {k} metadta: {v}")
+    
+    code_gen = VMCodeGenerator(mem_manager, vars, proc_info)
+    code = code_gen.generate(ir)
+    # for index, item in enumerate(code):
+    #     print(f"{index}: {item}")
+        
+        
+    with open(args.output_file, 'w+') as f:
+        for item in code:
+            f.write(item)
+            f.write("\n")
+        
+    
     
     # mem_map = mem_manager.assign_memory(ir)
     # mem_manager.print_memory_map()
@@ -121,7 +135,7 @@ def main():
     #     print("VM code generation failed!")
     #     sys.exit(1)
 
-    print(f"Successfully compiled to {output_file}")
+    print(f"Successfully compiled to {args.output_file}")
 
 
 if __name__ == "__main__":

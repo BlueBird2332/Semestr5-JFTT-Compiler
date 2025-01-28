@@ -261,6 +261,17 @@ class IRWrite(IRInstruction):
     
     
 @dataclass
+class IRReturn(IRInstruction):
+    
+    procedure:str
+    
+    def __str__(self) -> str:
+        return f"return"
+    
+    def print_full(self) -> str:
+        return f"return {f'# {self.comment}' if self.comment else ''}"
+    
+@dataclass
 class IRArrayRead(IRInstruction):
     """Read value from array at given index"""
     target: Variable  # Where to store the read value

@@ -33,3 +33,4 @@ htmlcov/
 .coverage.*
 coverage.xml
 *.cover
+gebalalang-tests
