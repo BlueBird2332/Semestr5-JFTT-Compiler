@@ -6,7 +6,7 @@ from ..intermediate_rep.IR_ops import Variable
 class MemoryCell:
     address: int
     is_array: bool = False
-    array_start: Optional[int] = None
+    array_start_address: Optional[int] = None
     array_size: Optional[int] = None
 
 class MemoryMap:
@@ -30,16 +30,45 @@ class MemoryMap:
         for var_name, var in variables.items():
             if var.is_const or var.is_temp:
                 continue
+            
+            # print(f"Allocating {var_name} {var.print_full()}")
+            # To do always store pointer to 0th element of array
+            if var.is_array and not var.is_pointer: #We need to initialize only arrays that are not parameters
+                # ptr_addr = self.next_regular_addr
                 
-            if var.is_array:
-                addr = self.next_regular_addr
-                self.next_regular_addr += var.array_size
+                # print(f"Allocating array {var_name} {var.print_full()}")
+                
+                offset = 0 - var.array_start
+                # print(f"Offset: {offset} for {var_name}")
+                current_memory = self.next_regular_addr
+                
+                self.next_regular_addr += var.array_size + 1
+                # print(f"Next regular address: {self.next_regular_addr}")
+                ptr_offset = current_memory + offset # To check
+                # print(f"Ptr offset: {ptr_offset}")
+                zero_adress = current_memory + offset
+
                 self.memory[var_name] = MemoryCell(
-                    address=addr,
+                    address=current_memory,
                     is_array=True,
-                    array_start=var.array_start,
+                    array_start_address=zero_adress,
                     array_size=var.array_size
                 )
+
+                
+               
+            # if var.is_array:
+            #     addr = self.next_regular_addr
+            #     self.next_regular_addr += var.array_size + 1
+            #     self.memory[var_name] = MemoryCell(
+            #         address=addr,
+            #         is_array=True,
+            #         array_start_address=addr + 1,
+            #         array_size=var.array_size
+            #     )
+                # print(f"Allocated array {var_name} at {ptr_offset}")
+                # print(f"Array {self.memory[var_name].array_start_address}")
+                
             else:
                 self.memory[var_name] = MemoryCell(
                     address=self.next_regular_addr
@@ -91,6 +120,7 @@ class MemoryMap:
                     address=self.next_temp_addr
                 )
             
+            
     def get_address(self, var_name: str) -> Optional[int]:
         """Get memory address for a variable"""
         # print(f"Getting address for {var_name}")
@@ -98,6 +128,8 @@ class MemoryMap:
         if var_name in self.memory:
             # print(f"Returning {self.memory[var_name].address}")
             return self.memory[var_name].address
+        
+        raise RuntimeError(f'No adress for variable {var_name} found')
         return None
         
     def get_array_info(self, array_name: str) -> Optional[Tuple[int, int, int]]:
@@ -105,7 +137,7 @@ class MemoryMap:
         if array_name in self.memory:
             cell = self.memory[array_name]
             if cell.is_array:
-                return (cell.address, cell.array_start, cell.array_size)
+                return (cell.address, cell.array_start_address, cell.array_size)
         return None
         
     def is_array(self, var_name: str) -> bool:
@@ -127,7 +159,7 @@ class MemoryMap:
                        and not any(c.address == addr for addr in self.const_map.values())]
         for name, cell in sorted(regular_vars, key=lambda x: x[1].address):
             if cell.is_array:
-                print(f"{name}: addr={cell.address}, array[{cell.array_start}:{cell.array_start + cell.array_size - 1}]")
+                print(f"{name}: addr={cell.address}, start={cell.array_start_address}, size={cell.array_size}")
             else:
                 print(f"{name}: addr={cell.address}")
                 
@@ -143,3 +175,34 @@ class MemoryMap:
                     if c.address >= self.next_temp_addr]
         for name, cell in sorted(temp_vars, key=lambda x: x[1].address):
             print(f"{name}: addr={cell.address}")
+            
+    def print_map_to_file(self, file = 'memory_map'):
+        """Print memory map to file"""
+        with open(f"{file}.txt", "w") as f:
+            f.write("Memory Map:\n")
+            f.write(f"Regular variables start: 1\n")
+            f.write(f"Next regular address: {self.next_regular_addr}\n")
+            f.write(f"Temp variables start: {self.next_temp_addr}\n")
+            
+            f.write("\nRegular Variables:\n")
+            regular_vars = [(n,c) for n,c in self.memory.items() 
+                           if c.address < self.next_regular_addr 
+                           and not any(c.address == addr for addr in self.const_map.values())]
+            for name, cell in sorted(regular_vars, key=lambda x: x[1].address):
+                if cell.is_array:
+                    f.write(f"{name}: addr={cell.address}, start={cell.array_start_address}, size={cell.array_size}\n")
+                else:
+                    f.write(f"{name}: addr={cell.address}\n")
+                    
+            if self.const_map:
+                f.write("\nConstant Values:\n")
+                for value, addr in sorted(self.const_map.items()):
+                    const_vars = [name for name, cell in self.memory.items() 
+                                if cell.address == addr]
+                    f.write(f"Value {value}: addr={addr} (used by: {', '.join(const_vars)})\n")
+                    
+            f.write("\nTemporary Variables:\n")
+            temp_vars = [(n,c) for n,c in self.memory.items() 
+                        if c.address >= self.next_temp_addr]
+            for name, cell in sorted(temp_vars, key=lambda x: x[1].address):
+                f.write(f"{name}: addr={cell.address}\n")

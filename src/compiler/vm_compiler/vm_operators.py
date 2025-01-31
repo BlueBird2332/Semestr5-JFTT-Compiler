@@ -155,7 +155,7 @@ class RETURN(base_op):
     val: int
     
     def __str__(self):
-        return f"RETURN {self.val}"    
+        return f"RTRN {self.val}"    
 
     
 @dataclass()

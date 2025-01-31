@@ -34,18 +34,13 @@ class IRGenerator:
                         is_temp: bool = False,
                         is_const: bool = False,
                         is_array: bool = False,
-                        is_param: bool = False,
-                        is_array_param: bool = False,                       
+                        is_pointer: bool = False,              
                         array_start: Optional[int] = None,
-                        array_size: Optional[int] = None,
-                        array_base_ref: Optional['Variable'] = None,
-                        array_start_ref: Optional['Variable'] = None ) -> Variable:
-        """Create/get a variable with proper scope"""
+                        array_size: Optional[int] = None) -> Variable:
         
-        # var_name = f"{self.current_proc}_{name}" if self.current_proc and not name.startswith('t') else name
         var_name = str(name)
-        if self.current_proc and not var_name.startswith(self.current_proc) and not is_const:
-            var_name = f"{self.current_proc}_{name}"
+        if self.current_proc and not var_name.startswith(self.current_proc + "#") and not is_const and not is_temp:
+            var_name = f"{self.current_proc}#{name}"
             
         if var_name not in self.variables:
             
@@ -57,15 +52,7 @@ class IRGenerator:
                     proc_name=proc_name
                 )
                 
-            elif is_param and is_array_param:
-                var = Variable.create_array_param(
-                    name=var_name,
-                    proc_name=proc_name,
-                    base_ref=array_base_ref,
-                    start_ref=array_start_ref
-                )
-                
-            elif is_param:
+            elif is_pointer and not is_temp:
                 var = Variable.create_param(name=var_name, proc_name=proc_name)
                 
             elif is_const:
@@ -74,12 +61,11 @@ class IRGenerator:
             elif is_temp:
                 self.temp_counter += 1
                 temp_name = f"t{self.temp_counter}"
-                var = Variable.create_temp(temp_name, self.current_proc)
+                var = Variable.create_temp(temp_name, self.current_proc, is_pointer=is_pointer)
 
                 
             else:                
                 var = Variable(name=var_name, proc_name=proc_name)
-                
             self.variables[var_name] = var
             return var            
         
@@ -87,8 +73,11 @@ class IRGenerator:
 
     def generate(self, node: Program) -> List[IRInstruction]:
         """Generate IR for entire program"""
+        
+        glob_temp = self.create_variable("global##temp", is_temp=True)
+        
+        
         self.code = []
-
         
         main_label = self.label_manager.new_label(
             LabelType.MAIN_START, "Main program start"
@@ -99,13 +88,15 @@ class IRGenerator:
             arguments=[],
             return_var=None
         )
-
-        # Generate arithmetic procedures      
     
-        if self.costly_ops:
-            self.code.extend(self.arithmetic.generate_arithmetic_procedures(self.costly_ops))
-            
-  
+
+        self.code.extend([
+            IRJump(label=main_label, comment="Jump to main program start"),
+        ])
+        
+        # if self.costly_ops:
+        #     self.code.extend(self.arithmetic.generate_arithmetic_procedures(self.costly_ops))
+              
             
         for proc in node.procedures:
             self._generate_procedure(proc)
@@ -114,11 +105,6 @@ class IRGenerator:
         # one_var = self.create_variable(1, is_const=True)
         # neg_one_var = self.create_variable(-1, is_const=True)
         
-
-        # Generate code for main program
-        main_label = self.label_manager.new_label(
-            LabelType.MAIN_START, "Main program start"
-        )
         
         self.process_declarations(node.declarations)
         
@@ -130,33 +116,18 @@ class IRGenerator:
                 procedure="main"
             )
         )
-
-        # # Generate main program code
+        
         for cmd in node.commands:
             self._generate_command(cmd)
             
-        # # self.symbol_table.print_table()
-        # with open("IR_file_memory", "w+") as f:
-        #     for k,v in self.variables.items():
-        #         f.write(f"Key: {k}, Value: {v.print_full()}\n")
-        
-        
-        # for item in self.code:
-        #     print(item)
-            
-        # for k,v in self.variables.items():
-        #     print(f"Key: {k}, Value: {v.print_full()}")
             
         return self.code, self.variables, self.proc_info
         
     def _generate_procedure(self, proc: Procedure) -> None:
-        """Generate IR for procedure definition"""
-        
+        """Generate IR for procedure definition"""       
               
-        self.current_proc = proc.name
-        
-        
-        
+        self.current_proc = proc.name       
+                
         proc_label = self.label_manager.new_label(
             LabelType.PROC_START, f"{proc.name} procedure"
         )
@@ -176,63 +147,37 @@ class IRGenerator:
         for cmd in proc.commands:
             self._generate_command(cmd)
 
-        # zero_var = self.create_variable(0, is_const=True)
-        # self.code.append(
-        #     IRAssign(
-        #         target=Variable("return"),
-        #         value=zero_var,
-        #         comment=f"End of procedure {proc.name}",
-        #     )
-        # )
+        ret = self.proc_info[self.current_proc].return_var
         self.code.append(
-            IRReturn(procedure=self.current_proc, comment=f"End of procedure {proc.name}")
+            IRReturn(return_variable=ret, comment=f"End of procedure {proc.name}")
         )
+        
         self.current_proc = None
         
     def process_declarations(self, declarations: List[Declaration], proc_name: Optional[str] = None) -> None:
         """Process declarations and register variables"""
         
         for decl in declarations:
+            name = decl.name
             if self.current_proc:
-                decl.name = self.current_proc + "#" + decl.name
+                name = self.current_proc + "#" + decl.name
             if decl.array_bounds:
                 # Create array variable
                 start, end = decl.array_bounds
+                # print(f"ARRAY BOUNDS for {decl.name}: {start}, {end}")
                 array_var = self.create_variable(
-                    name=decl.name,
+                    name=name,
                     proc_name=proc_name,
                     is_array=True,
                     array_start=start,
                     array_size=end - start + 1
                 )
-                
-                # Create array start index constant
-                start_var = self.create_variable(
-                    name=start,
-                    is_const=True
-                )
-                # Create array start reference variable
-                start_ref = self.create_variable(
-                    name=f"{decl.name}_start",
-                    proc_name=proc_name
-                )
-                
-                # Generate code for array initialization
-                self.code.append(
-                    IRAssign(
-                        target=start_ref,
-                        value=start_var,
-                        comment=f"Store array {decl.name} start index"
-                    )
-                )
             else:
-                # Create regular variable
                 var = self.create_variable(
-                    name=decl.name,
+                    name=name,
                     proc_name=proc_name
                 )
 
-            
 
     def process_parameters(self, proc_name: str, parameters: List[Tuple[str, bool]], start_id = None) -> None:
         """Process procedure parameters and register parameter variables"""
@@ -240,31 +185,15 @@ class IRGenerator:
         
         for param_name, is_array in parameters:
             if self.current_proc:
-                param_name = self.current_proc + "_" + param_name
-            if is_array:
-                # Create parameter array placeholder
-                param_var = self.create_variable(
-                    name=param_name,
-                    proc_name=proc_name,
-                    is_param=True,
-                    is_array_param=True
-                )
-                vars.append(param_var)
-                # Create start index reference for array parameter
-                start_ref = self.create_variable(
-                    name=f"{param_name}#start",
-                    proc_name=proc_name,
-                    is_param=True
-                )
-                vars.append(start_ref)
-            else:
-                # Create regular parameter variable
-                var =  self.create_variable(
-                    name=param_name,
-                    proc_name=proc_name,
-                    is_param=True
-                )
-                vars.append(var)
+                param_name = self.current_proc + "#" + param_name
+
+            param_var = self.create_variable(
+                name=param_name,
+                proc_name=proc_name,
+                is_pointer=True,
+                # is_array=True
+            )
+            vars.append(param_var)
                 
         self.proc_info[self.current_proc] = ProcInfo(
             begin_id=start_id,
@@ -297,14 +226,16 @@ class IRGenerator:
             array_var = self.create_variable(cmd.target.name, proc_name=self.current_proc)
             index = self._generate_value(cmd.target.array_index)
             
-            # Calculate offset
-            offset = self.create_variable(name=f"t{self.temp_counter + 1}", is_temp=True)
+            
+            
+            offset = self.create_variable(name=f"t{self.temp_counter + 1}", is_temp=True, is_pointer=True)
+            offset_copy = offset
             self.code.append(
                 IRBinaryOp(
-                    target=offset,
-                    left=index,
-                    right=self.create_variable(f"{cmd.target.name}_start", proc_name=self.current_proc),
-                    operator="-",
+                    target=wrap_by_value(offset),
+                    left=wrap_by_value(self.create_variable(f"{cmd.target.name}", proc_name=self.current_proc)),
+                    right=wrap_by_value(index),
+                    operator="+",
                     comment=f"Calculate array offset for assignment"
                 )
             )
@@ -312,13 +243,25 @@ class IRGenerator:
             # Generate the value to assign
             if isinstance(cmd.value, BinaryOp):
                 if cmd.value.operator in self.costly_ops:
-                    temp = self.create_variable(name=f"t{self.temp_counter + 1}", is_temp=True)
+                    temp = offset_copy# arguments go by reference
                     self._generate_optimized_op(temp, cmd.value)
-                    value = temp
+                    value = wrap_by_reference(temp)
                 else:
-                    left = self._generate_value(cmd.value.left)
+                    temp = offset_copy
+                    left = self._generate_value(cmd.value.left)                    
+                    if left.is_pointer:
+                        left = wrap_by_reference(left)
+                    else:
+                        left = wrap_by_value(left)
+                        
                     right = self._generate_value(cmd.value.right)
-                    temp = self.create_variable(name=f"t{self.temp_counter + 1}", is_temp=True)
+                    if right.is_pointer:
+                        right = wrap_by_reference(right)
+                    else:
+                        right = wrap_by_value(right)
+                        
+                    temp = wrap_by_reference(temp)
+                    
                     self.code.append(
                         IRBinaryOp(
                             target=temp,
@@ -328,28 +271,42 @@ class IRGenerator:
                             comment=f"Compute value for array assignment"
                         )
                     )
-                    value = temp
+                    value = wrap_by_value(temp)
             else:
-                value = self._generate_value(cmd.value)
-            
+                value = wrap_by_value(self._generate_value(cmd.value))        
             # Generate array write instruction
-            self.code.append(
-                IRArrayWrite(
-                    array=array_var,
-                    index=offset,
-                    value=value,
-                    comment=f"Write to array {cmd.target.name}[{index}]"
-                )
+                self.code.append(
+                    IRAssign(
+                        target=wrap_by_reference(offset),
+                        value=value,
+                        comment=f"Write to array {cmd.target.name}[{index}]"
+                    )
             )
         else:
+
             target = self.create_variable(cmd.target.name, proc_name=self.current_proc)
+            
+            if target.is_pointer:
+                target = wrap_by_reference(target)
+            else:
+                target = wrap_by_value(target)
                 
             if isinstance(cmd.value, BinaryOp):
                 if cmd.value.operator in self.costly_ops:
                     self._generate_optimized_op(target, cmd.value)
                 else:
                     left = self._generate_value(cmd.value.left)
+                    if left.is_pointer:
+                        left = wrap_by_reference(left)
+                    else:
+                        left = wrap_by_value(left)                 
+                    
                     right = self._generate_value(cmd.value.right)
+                    if right.is_pointer:
+                        right = wrap_by_reference(right)
+                    else:
+                        right = wrap_by_value(right)
+                        
                     self.code.append(
                         IRBinaryOp(
                             target=target,
@@ -361,6 +318,11 @@ class IRGenerator:
                     )
             else:
                 value = self._generate_value(cmd.value)
+                if value.is_pointer:
+                    value = wrap_by_reference(value)
+                else:
+                    value = wrap_by_value(value)
+                                     
                 self.code.append(
                     IRAssign(
                         target=target,
@@ -371,6 +333,10 @@ class IRGenerator:
 
 
     def _generate_optimized_op(self, target: Variable, op: BinaryOp) -> None:
+        
+        # TO DO
+        
+        
         left = self._generate_value(op.left)
         right = self._generate_value(op.right)
 
@@ -433,7 +399,16 @@ class IRGenerator:
 
         # Generate condition jump to else
         left = self._generate_value(cmd.condition.left)
+        if left.is_pointer:
+            left = wrap_by_reference(left)
+        else:
+            left = wrap_by_value(left)  
+        
         right = self._generate_value(cmd.condition.right)
+        if right.is_pointer:
+            right = wrap_by_reference(right)
+        else:
+            right = wrap_by_value(right)
 
         # invert condition for ">=" and "<=" and "=="
 
@@ -540,7 +515,16 @@ class IRGenerator:
 
         # Generate condition
         left = self._generate_value(cmd.condition.left)
+        if left.is_pointer:
+            left = wrap_by_reference(left)
+        else:
+            left = wrap_by_value(left)
+            
         right = self._generate_value(cmd.condition.right)
+        if right.is_pointer:
+            right = wrap_by_reference(right)
+        else:
+            right = wrap_by_value(right)
 
         if cmd.condition.operator in [">=", "<=", "="]:
             if cmd.condition.operator == ">=":
@@ -634,7 +618,17 @@ class IRGenerator:
 
         # Generate condition and jump back if condition is false
         left = self._generate_value(cmd.condition.left)
+        if left.is_pointer:
+            left = wrap_by_reference(left)
+        else:
+            left = wrap_by_value(left)
+            
         right = self._generate_value(cmd.condition.right)
+        if right.is_pointer:
+            right = wrap_by_reference(right)
+        else:
+            right = wrap_by_value(right)
+            
         self.code.append(
             IRCondJump(
                 left=left,
@@ -656,9 +650,18 @@ class IRGenerator:
         )
 
         # Initialize loop variable
-        iterator = self.create_variable(cmd.iterator)
+        iterator = BY_VALUE(self.create_variable(cmd.iterator))
         start_val = self._generate_value(cmd.start)
+        if start_val.is_pointer:
+            start_val = wrap_by_reference(start_val)
+        else:
+            start_val = wrap_by_value(start_val)
+            
         end_val = self._generate_value(cmd.end)
+        if end_val.is_pointer:
+            end_val = wrap_by_reference(end_val)
+        else:
+            end_val = wrap_by_value(end_val)
 
         self.code.append(
             IRAssign(
@@ -740,42 +743,32 @@ class IRGenerator:
         args = []
         proc_params = self.symbol_table.get_procedure_params(cmd.name)
         
-        for i, (arg, (param_name, is_array)) in enumerate(zip(cmd.arguments, proc_params or [])):
-            value = self._generate_value(arg)
-            if isinstance(value, Variable):
-                if is_array:
-                    # For array parameters, pass base and start index
-                    param_var = self.create_variable(
-                        name=param_name,
-                        proc_name=cmd.name,
-                        is_param=True,
-                        is_array_param=True,
-                        array_base_ref=value,
-                        array_start_ref=self.create_variable(f"{value.name}_start", proc_name=self.current_proc)
-                    )
-                    args.append(param_var)
-                else:
-                    args.append(value)
+        for param_call, declared_param in zip(cmd.arguments, proc_params):
+            
+            if declared_param[1]: # is_array
+                cp = f"{self.current_proc}#" if self.current_proc else ""
+                name = f"{cp}{param_call.name}"
+                base = self.create_variable(name = name, is_pointer=True)
+                args.append(base)
+                
             else:
-                # If it's a constant, create a temporary variable
-                temp = self.create_variable(name=f"t{self.temp_counter + 1}", is_temp=True)
-                self.code.append(
-                    IRAssign(
-                        target=temp,
-                        value=value,
-                        comment=f"Prepare argument for procedure call",
-                    )
-                )
-                args.append(temp)
+                cp = f"{self.current_proc}#" if self.current_proc else ""
+                name = f"{cp}{param_call.name}"
+                base = self.create_variable(name = name, is_pointer=True)
+                
+                args.append(base)          
+            
 
         self.code.append(
             IRProcCall(name=cmd.name, args=args, comment=f"Call procedure {cmd.name}")
         )
+                
+        
 
     def _generate_value(self, value: Value) -> Variable:
         """Generate IR for value"""
         if isinstance(value, Number):
-            return self.create_variable(value.value, is_const=True)
+            return wrap_by_value(self.create_variable(value.value, is_const=True))
         elif isinstance(value, Identifier):
             if value.array_index is not None:
                 index = self._generate_value(value.array_index)
@@ -785,56 +778,78 @@ class IRGenerator:
 
     def _handle_array_access(self, array_name: str, index: Variable) -> Variable:
         """Generate code for array access"""
-        temp = self.create_variable(name=f"t{self.temp_counter + 1}", is_temp=True)
-        offset = self.create_variable(name=f"t{self.temp_counter + 1}", is_temp=True)
+        temp = self.create_variable(name=f"t{self.temp_counter + 1}", is_temp=True, is_pointer=True)
+        # offset = self.create_variable(name=f"t{self.temp_counter + 1}", is_temp=True)
         
-        # Calculate offset
+        #### TO DO ####
+        if index.is_pointer:
+            right = wrap_by_reference(index)
+        else:
+            right = wrap_by_value(index)
+        # # # Read from array
+        # self.code.append(
+        #     # IRArrayRead(
+        #     #     target=temp,
+        #     #     array=self.create_variable(array_name, proc_name=self.current_proc),
+        #     #     index=index,
+        #     #     comment=f"Read from array {array_name}[{index}]"
+        #     # )
+
         self.code.append(
             IRBinaryOp(
-                target=offset,
-                left=index,
-                right=self.create_variable(f"{array_name}_start", proc_name=self.current_proc),
-                operator="-",
+                target=wrap_by_value(temp),
+                left= wrap_by_value(self.create_variable(array_name, proc_name=self.current_proc)),
+                right=right,
+                operator="+",
                 comment=f"Calculate array {array_name} offset"
             )
         )
         
-        # Read from array
-        self.code.append(
-            IRArrayRead(
-                target=temp,
-                array=self.create_variable(array_name, proc_name=self.current_proc),
-                index=offset,
-                comment=f"Read from array {array_name}[{index}]"
-            )
-        )
         
         return temp
 
     def _generate_read(self, cmd: ReadCommand) -> None:
         target = self.create_variable(cmd.target.name)
+        
         if cmd.target.array_index is not None:
             # Replace current array handling with:
+            name = cmd.target.name
+            temp = wrap_by_value(self.create_variable(name=f"t{self.temp_counter + 1}", is_temp=True, is_pointer=True))
+            # offset = self.create_variable(name=f"t{self.temp_counter + 1}", is_temp=True)
             index = self._generate_value(cmd.target.array_index)
-            temp = self.new_temp()
+            if index.is_pointer:
+                right = wrap_by_reference(index)
+            else:
+                right = wrap_by_value(index)
+            # Calculate offset
+            self.code.append(
+                IRBinaryOp(
+                    target=wrap_by_reference(temp),
+                    left= wrap_by_value(self.create_variable(name, proc_name=self.current_proc)),
+                    right=right,
+                    operator="+",
+                    comment=f"Calculate array {name} offset"
+                )
+            )
+            
             self.code.append(
                 IRRead(target=temp, comment=f"Read value for array {target}")
             )
-            # Generate array access using temp as value
-            offset = self._handle_array_access(cmd.target.name, index)
-            self.code.append(
-                IRBinaryOp(
-                    target=self.create_variable(cmd.target.name),
-                    left=offset,
-                    right=temp,
-                    operator="[]=",
-                    comment=f"Store read value to array"
-                )
-            )
+
         else:
+            if target.is_pointer:
+                target = wrap_by_reference(target)
+            else:
+                target = wrap_by_value(target)
             self.code.append(IRRead(target=target, comment=f"Read value into {target}"))
             
     def _generate_write(self, cmd: WriteCommand) -> None:
         value = self._generate_value(cmd.value)
+        if value.is_pointer:
+            value = wrap_by_reference(value)
+        else:
+            value = wrap_by_value(value)
+        
+        
         self.code.append(IRWrite(value=value, comment=f"Write value {value}"))
 

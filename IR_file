@@ -1,8 +1,36 @@
-a_start () := -100 (const, value=-100) # Store array a start index
-L2: # MAIN_START: Main program start
-read x () # Read value into x
-t1 (temp) := -100 (const, value=-100) - a_start () # Calculate array offset for assignment
-a (array[-100:-80])[t1 (temp)] := 100 (const, value=100) # Write to array a[-100]
-t3 (temp) := -100 (const, value=-100) - a_start () # Calculate array a offset
-t2 (temp) := a (array[-100:-80])[t3 (temp)] # Read from array a[-100]
-write t2 (temp) # Write value t2
+goto L1 # Jump to main program start
+L2: # PROC_START: SIMPLE_MATH PROCEDURE
+BY_VALUE BY_VALUE simple_math#j () := BY_VALUE BY_VALUE 31 (const, value=31) # Simple assignment
+BY_VALUE BY_VALUE t2 (temp, pointer) := BY_VALUE BY_VALUE simple_math#tab (array[0:10]) + BY_VALUE BY_VALUE simple_math#x (pointer) # Calculate array offset for assignment 
+BY REFERENCEBY REFERENCEt2 (temp, pointer) := BY_VALUE BY_VALUE 25 (const, value=25) # Write to array tab[simple_math#x]
+BY_VALUE BY_VALUE t3 (temp, pointer) := BY_VALUE BY_VALUE simple_math#tab (array[0:10]) + BY REFERENCEBY REFERENCEsimple_math#x (pointer) # Calculate array tab offset 
+write BY REFERENCEBY REFERENCEt3 (temp, pointer) # Write value BY REFERENCEt3
+BY_VALUE BY_VALUE simple_math#f () := BY REFERENCEBY REFERENCEsimple_math#x (pointer) # Simple assignment
+BY_VALUE BY_VALUE t4 (temp, pointer) := BY_VALUE BY_VALUE simple_math#y (pointer) + BY_VALUE BY_VALUE 0 (const, value=0) # Calculate array y offset 
+BY_VALUE BY_VALUE simple_math#g () := BY REFERENCEBY REFERENCEt4 (temp, pointer) # Simple assignment
+BY_VALUE BY_VALUE t5 (temp, pointer) := BY_VALUE BY_VALUE simple_math#y (pointer) + BY REFERENCEBY REFERENCEsimple_math#x (pointer) # Calculate array y offset 
+BY_VALUE BY_VALUE simple_math#h () := BY REFERENCEBY REFERENCEt5 (temp, pointer) # Simple assignment
+BY_VALUE BY_VALUE t6 (temp, pointer) := BY_VALUE BY_VALUE simple_math#y (pointer) + BY_VALUE BY_VALUE 20 (const, value=20) # Calculate array y offset 
+BY_VALUE BY_VALUE simple_math#i () := BY REFERENCEBY REFERENCEt6 (temp, pointer) # Simple assignment
+BY_VALUE BY_VALUE t7 (temp, pointer) := BY_VALUE BY_VALUE simple_math#tab (array[0:10]) + BY REFERENCEBY REFERENCEsimple_math#x (pointer) # Calculate array tab offset 
+BY_VALUE BY_VALUE simple_math#k () := BY REFERENCEBY REFERENCEt7 (temp, pointer) # Simple assignment
+BY_VALUE BY_VALUE t8 (temp, pointer) := BY_VALUE BY_VALUE simple_math#y (pointer) + BY_VALUE BY_VALUE simple_math#j () # Calculate array y offset 
+BY_VALUE BY_VALUE simple_math#l () := BY REFERENCEBY REFERENCEt8 (temp, pointer) # Simple assignment
+write BY_VALUE BY_VALUE simple_math#f () # Write value BY_VALUE simple_math#f
+write BY_VALUE BY_VALUE simple_math#g () # Write value BY_VALUE simple_math#g
+write BY_VALUE BY_VALUE simple_math#h () # Write value BY_VALUE simple_math#h
+write BY_VALUE BY_VALUE simple_math#i () # Write value BY_VALUE simple_math#i
+write BY_VALUE BY_VALUE simple_math#k () # Write value BY_VALUE simple_math#k
+write BY_VALUE BY_VALUE simple_math#l () # Write value BY_VALUE simple_math#l
+return simple_math#return () # End of procedure simple_math
+L1: # MAIN_START: Main program start
+BY_VALUE BY_VALUE a () := BY_VALUE BY_VALUE 5 (const, value=5) # Simple assignment
+BY_VALUE BY_VALUE t9 (temp, pointer) := BY_VALUE BY_VALUE b (array[-30:31]) + BY_VALUE BY_VALUE 0 (const, value=0) # Calculate array offset for assignment 
+BY REFERENCEBY REFERENCEt9 (temp, pointer) := BY_VALUE BY_VALUE 10 (const, value=10) # Write to array b[BY_VALUE 0]
+BY_VALUE BY_VALUE t10 (temp, pointer) := BY_VALUE BY_VALUE b (array[-30:31]) + BY_VALUE BY_VALUE a () # Calculate array offset for assignment 
+BY REFERENCEBY REFERENCEt10 (temp, pointer) := BY_VALUE BY_VALUE 15 (const, value=15) # Write to array b[a]
+BY_VALUE BY_VALUE t11 (temp, pointer) := BY_VALUE BY_VALUE b (array[-30:31]) + BY_VALUE BY_VALUE 20 (const, value=20) # Calculate array offset for assignment 
+BY REFERENCEBY REFERENCEt11 (temp, pointer) := BY_VALUE BY_VALUE 20 (const, value=20) # Write to array b[BY_VALUE 20]
+BY_VALUE BY_VALUE t12 (temp, pointer) := BY_VALUE BY_VALUE b (array[-30:31]) + BY_VALUE BY_VALUE 31 (const, value=31) # Calculate array offset for assignment 
+BY REFERENCEBY REFERENCEt12 (temp, pointer) := BY_VALUE BY_VALUE 30 (const, value=30) # Write to array b[BY_VALUE 31]
+call simple_math(a (), b (array[-30:31])) # Call procedure simple_math

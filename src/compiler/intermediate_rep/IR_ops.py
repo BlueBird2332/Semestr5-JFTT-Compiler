@@ -29,16 +29,12 @@ class Variable:
     is_const: bool = False
     const_value: Optional[int] = None
     is_array: bool = False
-    is_param: bool = False
-    is_array_param: bool = False  # For 'T' parameters
+    is_pointer: bool = False
     
     # Array info
     array_start: Optional[int] = None
     array_size: Optional[int] = None  # end - start + 1
     
-    # For arrays passed as parameters
-    array_base_ref: Optional['Variable'] = None  # Reference to original array
-    array_start_ref: Optional['Variable'] = None  # Reference to start index
     
     def __str__(self) -> str:
         """String representation for IR code generation"""
@@ -55,20 +51,22 @@ class Variable:
         if self.is_temp:
             parts.append("temp")
         if self.is_array:
-            parts.append(f"array[{self.array_start}:{self.array_start + self.array_size - 1}]")
-        if self.is_param:
-            parts.append("param")
-        if self.is_array_param:
-            parts.append("array_param")
+            if self.is_pointer:
+                parts.append(f"array[{self.name}]")
+            else:
+                parts.append(f"array[{self.array_start}:{self.array_start + self.array_size - 1}]")
+        if self.is_pointer:
+            parts.append("pointer")
             
         return f"{str(self)} ({', '.join(parts)})"
     
     @staticmethod
-    def create_temp(temp_name: str, proc_name: Optional[str] = None) -> 'Variable':
+    def create_temp(temp_name: str, proc_name: Optional[str] = None, is_pointer: Optional[bool] = False) -> 'Variable':
         return Variable(
             name=temp_name,
             proc_name=proc_name,
-            is_temp=True
+            is_temp=True,
+            is_pointer=is_pointer
         )
     
     @staticmethod
@@ -78,41 +76,86 @@ class Variable:
             proc_name=proc_name,
             is_array=True,
             array_start=start,
-            array_size=size
+            array_size=size,
+            # is_pointer=True
         )
         
     @staticmethod
     def create_param(name: str, proc_name: str) -> 'Variable':
-        return Variable(name=name, proc_name=proc_name, is_param=True)
+        return Variable(name=name, proc_name=proc_name, is_pointer=True)
     
-    @staticmethod
-    def create_array_param(name: str, proc_name: str, base_ref: 'Variable', start_ref: 'Variable') -> 'Variable':
-        return Variable(
-            name=name,
-            proc_name=proc_name,
-            is_param=True,
-            is_array_param=True,
-            array_base_ref=base_ref,
-            array_start_ref=start_ref
-        )
-        
     @staticmethod
     def from_number(value: str) -> 'Variable':
         """Create constant variable"""
         name = str(value)
         return Variable(name=name, is_const=True, const_value=int(value))
     
-    @staticmethod
-    def from_symbol(symbol: Symbol, proc_name: Optional[str] = None) -> 'Variable':
-        """Create variable from symbol"""
-        if symbol.is_array:
-            return Variable.create_array(
-                name=symbol.name,
-                start=symbol.array_start,
-                size=symbol.array_end - symbol.array_start + 1,
-                proc_name=proc_name
-            )
-        return Variable(name=symbol.name, proc_name=proc_name)
+    
+    
+def wrap_by_value(var: Variable) -> Variable:
+    if isinstance(var, BY_VALUE):
+        return var
+    # elif isinstance(var, BY_REFERENCE):
+    #     raise ValueError(f"Variable {var} is already a reference")
+    else:
+        return BY_VALUE(var)
+    
+def wrap_by_reference(var: Variable) -> Variable:
+    if isinstance(var, BY_REFERENCE):
+        return var
+    # elif isinstance(var, BY_VALUE):
+        # raise ValueError(f"Variable {var} is already a value")
+    else:
+        return BY_REFERENCE(var)
+    
+@dataclass
+class BY_VALUE(Variable):
+    """Enhanced variable representation for IR"""
+    
+    def __init__(self, var: Variable):
+        # Copy all attributes from the wrapped variable
+        super().__init__(
+            name=var.name,
+            proc_name=var.proc_name,
+            is_temp=var.is_temp,
+            is_const=var.is_const,
+            const_value=var.const_value,
+            is_array=var.is_array,
+            is_pointer=var.is_pointer,
+            array_start=var.array_start,
+            array_size=var.array_size
+        )
+    
+    def __str__(self):
+        return f"BY_VALUE {super().__str__()}"
+    
+    def print_full(self):
+        return f"BY_VALUE {super().print_full()}"
+    
+@dataclass
+class BY_REFERENCE(Variable):
+    def __init__(self, var: Variable):
+        # Copy all attributes from the wrapped variable
+        super().__init__(
+            name=var.name,
+            proc_name=var.proc_name,
+            is_temp=var.is_temp,
+            is_const=var.is_const,
+            const_value=var.const_value,
+            is_array=var.is_array,
+            is_pointer=var.is_pointer,
+            array_start=var.array_start,
+            array_size=var.array_size
+        )
+    
+    def __str__(self):
+        return f"BY REFERENCE{super().__str__()}"
+    
+    def print_full(self):
+        return f"BY REFERENCE{super().print_full()}"
+
+
+
     
 class LabelManager:
     """Manages label creation and tracking"""
@@ -175,6 +218,7 @@ class IRBinaryOp(IRInstruction):
     left: Variable
     right: Variable
     operator: str
+    dereference_target: bool = True
     
     def __post_init__(self):
         if self.operator not in {'+', '-', '*', '/', '%', '[]'}:
@@ -184,7 +228,10 @@ class IRBinaryOp(IRInstruction):
         return f"{self.target} := {self.left} {self.operator} {self.right}"
     
     def print_full(self) -> str:
-        return f"{self.target.print_full()} := {self.left.print_full()} {self.operator} {self.right.print_full()} {f'# {self.comment}' if self.comment else ''}"
+        comment_part = f"# {self.comment}" if self.comment else ''
+        deref_part = f"dereference_target {self.dereference_target}" if self.operator == '[]' else ''
+        return (f"{self.target.print_full()} := {self.left.print_full()} "
+                f"{self.operator} {self.right.print_full()} {comment_part} {deref_part}")
 
 @dataclass
 class IRLabel(IRInstruction):
@@ -263,13 +310,15 @@ class IRWrite(IRInstruction):
 @dataclass
 class IRReturn(IRInstruction):
     
-    procedure:str
+    return_variable: Variable
     
     def __str__(self) -> str:
-        return f"return"
+        return f"return {self.return_variable}"
     
-    def print_full(self) -> str:
-        return f"return {f'# {self.comment}' if self.comment else ''}"
+    def print_full(self) -> str: 
+        return f"return {self.return_variable.print_full()} {f'# {self.comment}' if self.comment else ''}"
+    
+
     
 @dataclass
 class IRArrayRead(IRInstruction):
