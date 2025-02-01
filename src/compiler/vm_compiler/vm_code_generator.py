@@ -85,6 +85,12 @@ class VMCodeGenerator:
     def compile_ir(self, op: IRInstruction) -> List[str]:
         if isinstance(op, IRLabel):
             # self.instruction_counter += 1
+            if self.debug:
+                print(f"IRLabel {op}")
+                print("----"*8)
+            
+            
+            
             return [LABEL(op.label_id)] 
         elif isinstance(op, IRRead):
             return self.compile_read_op(op) 
@@ -209,29 +215,22 @@ class VMCodeGenerator:
         code = []
         
         for passed_argument, param_signature in zip(op.args, procedure_params):
-            
-            if isinstance(passed_argument, BY_REFERENCE):
-                code.append(LOADI(self.memory_map.get_address(passed_argument.name)))
+                    
+            if passed_argument.is_array or passed_argument.is_pointer:
+                
+                print(f"LOADING POINTER INTO {param_signature.name}")
+                
+                code.append(LOAD(self.memory_map.get_address(passed_argument.name)))
                 code.append(STORE(self.memory_map.get_address(param_signature.name)))
             else:
                 code.append(SET(self.memory_map.get_address(passed_argument.name)))
                 code.append(STORE(self.memory_map.get_address(param_signature.name)))
-            self.instruction_counter += 2
-            
-            
-            
-            # if passed_argument.is_array or passed_argument.is_array_param or passed_argument.is_param:
-            #     code.append(LOADI(self.memory_map.get_address(passed_argument.name)))
-            #     code.append(STORE(self.memory_map.get_address(param_signature.name)))
-            # else:
-            #     code.append(SET(self.memory_map.get_address(passed_argument.name)))
-            #     code.append(STORE(self.memory_map.get_address(param_signature.name)))
-            # self.instruction_counter +=2
+            self.instruction_counter +=2
         proc_label = self.proc_info[op.name].begin_id
         
         return_address = self.instruction_counter + 3
         print(f"RETURN ADDRESS {return_address} from line {self.instruction_counter}")
-        code.append(SET(return_address))
+        code.append(SET_HERE(3))
         code.append(STORE(self.memory_map.get_address(self.proc_info[op.name].return_var.name)))
         code.append(JUMPLABEL(proc_label))
         self.instruction_counter += 3  # Coun
@@ -311,6 +310,108 @@ class VMCodeGenerator:
             self.instruction_counter += 1
             
             
+        elif operator == '*':
+            
+            if isinstance(left, BY_REFERENCE):
+                code.append(LOADI(self.memory_map.get_address(left.name)))
+            else:
+                code.append(LOAD(self.memory_map.get_address(left.name)))
+            self.instruction_counter += 1
+            
+            code.append(STORE(self.memory_map.get_address("arg1")))
+            
+            if isinstance(right, BY_REFERENCE):
+                code.append(LOADI(self.memory_map.get_address(right.name)))
+            else:
+                code.append(LOAD(self.memory_map.get_address(right.name)))
+            self.instruction_counter += 1
+            
+            code.append(STORE(self.memory_map.get_address("arg2")))
+    
+            
+            return_address = self.instruction_counter + 3
+            print(f"RETURN ADDRESS {return_address} from line {self.instruction_counter}")
+            code.append(SET_HERE(3))
+            code.append(STORE(self.memory_map.get_address(self.proc_info["mul"].return_var.name)))
+            code.append(JUMPLABEL(self.proc_info["mul"].begin_id))
+            self.instruction_counter += 3
+            
+            code.append(LOAD(self.memory_map.get_address("result")))
+            
+            if isinstance(target, BY_REFERENCE):
+                code.append(STOREI(self.memory_map.get_address(target.name)))
+            else:
+                code.append(STORE(self.memory_map.get_address(target.name)))
+        
+        elif operator == '/':
+            
+            if isinstance(left, BY_REFERENCE):
+                code.append(LOADI(self.memory_map.get_address(left.name)))
+            else:
+                code.append(LOAD(self.memory_map.get_address(left.name)))
+            self.instruction_counter += 1
+            
+            code.append(STORE(self.memory_map.get_address("arg1")))
+            
+            if isinstance(right, BY_REFERENCE):
+                code.append(LOADI(self.memory_map.get_address(right.name)))
+            else:
+                code.append(LOAD(self.memory_map.get_address(right.name)))
+            self.instruction_counter += 1
+            
+            code.append(STORE(self.memory_map.get_address("arg2")))
+            
+            return_address = self.instruction_counter + 3
+            print(f"RETURN ADDRESS {return_address} from line {self.instruction_counter}")
+            code.append(SET_HERE(3))
+            code.append(STORE(self.memory_map.get_address(self.proc_info["div"].return_var.name)))
+            code.append(JUMPLABEL(self.proc_info["div"].begin_id))
+            self.instruction_counter += 3
+            
+            code.append(LOAD(self.memory_map.get_address("result")))
+            
+            if isinstance(target, BY_REFERENCE):
+                code.append(STOREI(self.memory_map.get_address(target.name)))
+            else:
+                code.append(STORE(self.memory_map.get_address(target.name)))
+        
+        elif operator == '%':
+            
+            if isinstance(left, BY_REFERENCE):
+                code.append(LOADI(self.memory_map.get_address(left.name)))
+            else:
+                code.append(LOAD(self.memory_map.get_address(left.name)))
+            self.instruction_counter += 1
+            
+            code.append(STORE(self.memory_map.get_address("arg1")))
+            
+            if isinstance(right, BY_REFERENCE):
+                code.append(LOADI(self.memory_map.get_address(right.name)))
+            else:
+                code.append(LOAD(self.memory_map.get_address(right.name)))
+            self.instruction_counter += 1
+            
+            code.append(STORE(self.memory_map.get_address("arg2")))
+            
+            return_address = self.instruction_counter + 3
+            print(f"RETURN ADDRESS {return_address} from line {self.instruction_counter}")
+            code.append(SET_HERE(3))
+            code.append(STORE(self.memory_map.get_address(self.proc_info["div"].return_var.name)))
+            code.append(JUMPLABEL(self.proc_info["div"].begin_id))
+            self.instruction_counter += 3
+            
+            code.append(LOAD(self.memory_map.get_address("result2")))
+            
+            if isinstance(target, BY_REFERENCE):
+                code.append(STOREI(self.memory_map.get_address(target.name)))
+            else:
+                code.append(STORE(self.memory_map.get_address(target.name)))
+            
+            
+                     
+            
+                
+            
         if self.debug:
             print(f"IRBinaryOp {op}")
             for c in code:
@@ -328,7 +429,7 @@ class VMCodeGenerator:
         code.append(JUMPLABEL(op.label))
         
         if self.debug:
-            print(f"IRJump {op}")
+            print(f"IRJumpLabel {op}")
             for c in code:
                 print(c)
             print("----"*8) 
@@ -411,8 +512,8 @@ class VMCodeGenerator:
         
         
     def compile_cond_jump_op(self, op: IRCondJump) -> List[str]:
-        print("____")
-        print(op)
+        
+ 
         
         code = []
         
@@ -441,8 +542,15 @@ class VMCodeGenerator:
             
         else:
             raise RuntimeError(f"Operator {operator} not supported")
+        
+        if self.debug:
+            print(f"IRCondJump {op}")
+            for c in code:
+                print(c)
             
         return code
+    
+
             
         
             

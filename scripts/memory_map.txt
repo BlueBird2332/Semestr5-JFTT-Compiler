@@ -1,0 +1,35 @@
+Memory Map:
+Regular variables start: 1
+Next regular address: 25
+Temp variables start: 1073741823
+
+Regular Variables:
+arg1: addr=1
+arg2: addr=2
+result: addr=3
+result2: addr=4
+sign1: addr=5
+sign2: addr=6
+temp: addr=7
+divisor_copy: addr=8
+abs#return: addr=9
+mul#return: addr=10
+div#return: addr=11
+t: addr=12
+s: addr=13
+u: addr=14
+v: addr=15
+w: addr=16
+p: addr=17
+q: addr=18
+
+Constant Values:
+Value -1: addr=21 (used by: -1)
+Value 0: addr=19 (used by: 0)
+Value 1: addr=20 (used by: 1)
+Value 202: addr=22 (used by: 202)
+Value 404: addr=23 (used by: 404)
+Value 606: addr=24 (used by: 606)
+
+Temporary Variables:
+global##temp: addr=1073741823

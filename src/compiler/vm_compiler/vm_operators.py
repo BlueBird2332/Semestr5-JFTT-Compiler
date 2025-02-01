@@ -162,3 +162,9 @@ class RETURN(base_op):
 class HALT(base_op):
     def __str__(self):
         return "HALT"
+
+@dataclass()
+class SET_HERE(base_op):
+    offset: int
+    def __str__(self):
+        return "SET_HERE + " + str(self.offset)

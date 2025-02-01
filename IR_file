@@ -1,36 +1,45 @@
 goto L1 # Jump to main program start
-L2: # PROC_START: SIMPLE_MATH PROCEDURE
-BY_VALUE BY_VALUE simple_math#j () := BY_VALUE BY_VALUE 31 (const, value=31) # Simple assignment
-BY_VALUE BY_VALUE t2 (temp, pointer) := BY_VALUE BY_VALUE simple_math#tab (array[0:10]) + BY_VALUE BY_VALUE simple_math#x (pointer) # Calculate array offset for assignment 
-BY REFERENCEBY REFERENCEt2 (temp, pointer) := BY_VALUE BY_VALUE 25 (const, value=25) # Write to array tab[simple_math#x]
-BY_VALUE BY_VALUE t3 (temp, pointer) := BY_VALUE BY_VALUE simple_math#tab (array[0:10]) + BY REFERENCEBY REFERENCEsimple_math#x (pointer) # Calculate array tab offset 
-write BY REFERENCEBY REFERENCEt3 (temp, pointer) # Write value BY REFERENCEt3
-BY_VALUE BY_VALUE simple_math#f () := BY REFERENCEBY REFERENCEsimple_math#x (pointer) # Simple assignment
-BY_VALUE BY_VALUE t4 (temp, pointer) := BY_VALUE BY_VALUE simple_math#y (pointer) + BY_VALUE BY_VALUE 0 (const, value=0) # Calculate array y offset 
-BY_VALUE BY_VALUE simple_math#g () := BY REFERENCEBY REFERENCEt4 (temp, pointer) # Simple assignment
-BY_VALUE BY_VALUE t5 (temp, pointer) := BY_VALUE BY_VALUE simple_math#y (pointer) + BY REFERENCEBY REFERENCEsimple_math#x (pointer) # Calculate array y offset 
-BY_VALUE BY_VALUE simple_math#h () := BY REFERENCEBY REFERENCEt5 (temp, pointer) # Simple assignment
-BY_VALUE BY_VALUE t6 (temp, pointer) := BY_VALUE BY_VALUE simple_math#y (pointer) + BY_VALUE BY_VALUE 20 (const, value=20) # Calculate array y offset 
-BY_VALUE BY_VALUE simple_math#i () := BY REFERENCEBY REFERENCEt6 (temp, pointer) # Simple assignment
-BY_VALUE BY_VALUE t7 (temp, pointer) := BY_VALUE BY_VALUE simple_math#tab (array[0:10]) + BY REFERENCEBY REFERENCEsimple_math#x (pointer) # Calculate array tab offset 
-BY_VALUE BY_VALUE simple_math#k () := BY REFERENCEBY REFERENCEt7 (temp, pointer) # Simple assignment
-BY_VALUE BY_VALUE t8 (temp, pointer) := BY_VALUE BY_VALUE simple_math#y (pointer) + BY_VALUE BY_VALUE simple_math#j () # Calculate array y offset 
-BY_VALUE BY_VALUE simple_math#l () := BY REFERENCEBY REFERENCEt8 (temp, pointer) # Simple assignment
-write BY_VALUE BY_VALUE simple_math#f () # Write value BY_VALUE simple_math#f
-write BY_VALUE BY_VALUE simple_math#g () # Write value BY_VALUE simple_math#g
-write BY_VALUE BY_VALUE simple_math#h () # Write value BY_VALUE simple_math#h
-write BY_VALUE BY_VALUE simple_math#i () # Write value BY_VALUE simple_math#i
-write BY_VALUE BY_VALUE simple_math#k () # Write value BY_VALUE simple_math#k
-write BY_VALUE BY_VALUE simple_math#l () # Write value BY_VALUE simple_math#l
-return simple_math#return () # End of procedure simple_math
+L2: # ABSOLUTE VALUE PROCEDURE
+if BY_VALUE BY_VALUE arg1 () < BY_VALUE BY_VALUE 0 (const, value=0) goto L3 # Skip negation if positive
+BY_VALUE BY_VALUE sign1 () := BY_VALUE BY_VALUE 1 (const, value=1) 
+goto L4 # Skip negation
+L3: # Negate arg1 if negative
+BY_VALUE BY_VALUE arg1 () := BY_VALUE BY_VALUE 0 (const, value=0) - BY_VALUE BY_VALUE arg1 () # Negate negative value 
+BY_VALUE BY_VALUE sign1 () := BY_VALUE BY_VALUE -1 (const, value=-1) # Set sign of arg1 to negative
+L4: # End absolute value for arg1
+if BY_VALUE BY_VALUE arg2 () < BY_VALUE BY_VALUE 0 (const, value=0) goto L5 # Skip negation if positive
+BY_VALUE BY_VALUE sign2 () := BY_VALUE BY_VALUE 1 (const, value=1) 
+goto L6 # Skip negation
+L5: # Negate arg2 if negative
+BY_VALUE BY_VALUE arg2 () := BY_VALUE BY_VALUE 0 (const, value=0) - BY_VALUE BY_VALUE arg2 () # Negate negative value 
+BY_VALUE BY_VALUE sign2 () := BY_VALUE BY_VALUE -1 (const, value=-1) # Set sign of arg2 to negative
+L6: # End absolute value for arg2
+L7: # End absolute value
+return BY_VALUE BY_VALUE abs#return () # Return from abs
+L8: # MULTIPLY PROCEDURE
+call abs() 
+BY_VALUE BY_VALUE result () := BY_VALUE BY_VALUE 0 (const, value=0) # Initialize result
+L9: # Main multiplication loop
+if BY_VALUE BY_VALUE arg2 () > BY_VALUE BY_VALUE 0 (const, value=0) goto L11 # Whlie multiplier is greater than 0
+goto L10 # Exit multiplication loop
+L11: # Helper if statement
+temp () := BY_VALUE BY_VALUE arg2 () # Hold arg2 for halving
+temp () := temp / 2 # Halve arg2
+BY_VALUE BY_VALUE temp () := BY_VALUE BY_VALUE temp () + BY_VALUE BY_VALUE temp () # Add temp to check modularity 
+BY_VALUE BY_VALUE temp () := BY_VALUE BY_VALUE temp () - BY_VALUE BY_VALUE arg2 () # Subtract temp from arg2 
+if BY_VALUE BY_VALUE temp () = BY_VALUE BY_VALUE 0 (const, value=0) goto L13 # Check if arg2 is odd
+BY_VALUE BY_VALUE result () := BY_VALUE BY_VALUE result () + BY_VALUE BY_VALUE arg1 () # Add multiplicand to result 
+L13: # If end statement
+BY_VALUE BY_VALUE arg1 () := BY_VALUE BY_VALUE arg1 () + BY_VALUE BY_VALUE arg1 () # Double the multiplicand 
+BY_VALUE BY_VALUE arg2 () := BY_VALUE arg2 / 2 # Halve the multiplier
+goto L9 # Continue multiplication loop
+L10: # End of main multiplication loop
+if BY_VALUE BY_VALUE sign1 () = BY_VALUE BY_VALUE sign2 () goto L14 # Check if signs match
+BY_VALUE BY_VALUE result () := BY_VALUE BY_VALUE 0 (const, value=0) - BY_VALUE BY_VALUE result () # Negate result 
+L14: # End multiplication
+return BY_VALUE BY_VALUE mul#return () # Return from multiply
 L1: # MAIN_START: Main program start
-BY_VALUE BY_VALUE a () := BY_VALUE BY_VALUE 5 (const, value=5) # Simple assignment
-BY_VALUE BY_VALUE t9 (temp, pointer) := BY_VALUE BY_VALUE b (array[-30:31]) + BY_VALUE BY_VALUE 0 (const, value=0) # Calculate array offset for assignment 
-BY REFERENCEBY REFERENCEt9 (temp, pointer) := BY_VALUE BY_VALUE 10 (const, value=10) # Write to array b[BY_VALUE 0]
-BY_VALUE BY_VALUE t10 (temp, pointer) := BY_VALUE BY_VALUE b (array[-30:31]) + BY_VALUE BY_VALUE a () # Calculate array offset for assignment 
-BY REFERENCEBY REFERENCEt10 (temp, pointer) := BY_VALUE BY_VALUE 15 (const, value=15) # Write to array b[a]
-BY_VALUE BY_VALUE t11 (temp, pointer) := BY_VALUE BY_VALUE b (array[-30:31]) + BY_VALUE BY_VALUE 20 (const, value=20) # Calculate array offset for assignment 
-BY REFERENCEBY REFERENCEt11 (temp, pointer) := BY_VALUE BY_VALUE 20 (const, value=20) # Write to array b[BY_VALUE 20]
-BY_VALUE BY_VALUE t12 (temp, pointer) := BY_VALUE BY_VALUE b (array[-30:31]) + BY_VALUE BY_VALUE 31 (const, value=31) # Calculate array offset for assignment 
-BY REFERENCEBY REFERENCEt12 (temp, pointer) := BY_VALUE BY_VALUE 30 (const, value=30) # Write to array b[BY_VALUE 31]
-call simple_math(a (), b (array[-30:31])) # Call procedure simple_math
+BY_VALUE BY_VALUE a () := BY_VALUE BY_VALUE 9223372036854775807 (const, value=9223372036854775807) * BY_VALUE BY_VALUE 9223372036854775807 (const, value=9223372036854775807) # Optimized * operation 
+BY_VALUE BY_VALUE c () := BY_VALUE BY_VALUE 18446744073709551614 (const, value=18446744073709551614) # Simple assignment
+write BY_VALUE BY_VALUE a () # Write value BY_VALUE a
+write BY_VALUE BY_VALUE c () # Write value BY_VALUE c

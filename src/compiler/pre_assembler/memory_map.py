@@ -48,26 +48,21 @@ class MemoryMap:
                 # print(f"Ptr offset: {ptr_offset}")
                 zero_adress = current_memory + offset
 
+                print(f"Array memory start: {current_memory}")
+                print(f"Array memory end: {current_memory + var.array_size}")
+                print(f"Array start address: {zero_adress}")
+                
+                
+                    
                 self.memory[var_name] = MemoryCell(
-                    address=current_memory,
+                    address=self.next_regular_addr +1,
                     is_array=True,
                     array_start_address=zero_adress,
                     array_size=var.array_size
                 )
 
+                self.next_regular_addr += var.array_size + 1
                 
-               
-            # if var.is_array:
-            #     addr = self.next_regular_addr
-            #     self.next_regular_addr += var.array_size + 1
-            #     self.memory[var_name] = MemoryCell(
-            #         address=addr,
-            #         is_array=True,
-            #         array_start_address=addr + 1,
-            #         array_size=var.array_size
-            #     )
-                # print(f"Allocated array {var_name} at {ptr_offset}")
-                # print(f"Array {self.memory[var_name].array_start_address}")
                 
             else:
                 self.memory[var_name] = MemoryCell(

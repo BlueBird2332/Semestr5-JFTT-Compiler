@@ -113,7 +113,7 @@ def main():
     # for k,v in proc_info.items():
     #     print(f"Proc: {k} metadta: {v}")
     
-    code_gen = VMCodeGenerator(mem_manager, vars, proc_info)
+    code_gen = VMCodeGenerator(mem_manager, vars, proc_info, costly_ops=symbol_table.costly_operations)
     code = code_gen.generate(ir)
     # for index, item in enumerate(code):
     #     print(f"{index}: {item}")

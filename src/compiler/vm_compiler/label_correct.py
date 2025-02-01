@@ -41,6 +41,11 @@ def correct_labels(code: List[base_op]) -> List[str]:
         elif isinstance(item, LABEL):
             continue
         
+        elif isinstance(item, SET_HERE):
+            offset = item.offset + curr
+            corrected_code.append(str(SET(offset)))
+            # corrected_code.append(str(item))
+        
         else:
             corrected_code.append(str(item))
             

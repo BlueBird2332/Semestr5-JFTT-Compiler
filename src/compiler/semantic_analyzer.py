@@ -5,6 +5,7 @@ from .ast_nodes import *
 from .semantic_error import SemanticError
 from .symbol_table import Symbol, SymbolTable
 
+MAX_VALUE = 2 ** 64 - 1
 
 class SemanticAnalyzer:
     def __init__(self):
@@ -378,18 +379,28 @@ class SemanticAnalyzer:
             self._check_value(expr.right)
 
             # Check division by zero for constants
-            if expr.operator in ["/", "%"] and isinstance(expr.right, Number):
-                if expr.right.value == 0:
-                    self._add_error("Division by zero", expr.location)
+            # if expr.operator in ["/", "%"] and isinstance(expr.right, Number):
+            #     if expr.right.value == 0:
+            #         self._add_error("Division by zero", expr.location)
 
             if expr.operator == "*":
 
                 if isinstance(expr.left, Number) and isinstance(expr.right, Number):
                     # Create new Number with the computed value AND location from original expression
-                    return Number(
-                        value=expr.left.value * expr.right.value,
-                        location=expr.location,  # Use the BinaryOp's location
-                    )
+                    
+                    if expr.left.value * expr.right.value > MAX_VALUE:
+                        # self._add_error(
+                        #     "Integer overflow", expr.location
+                        # )
+                        # return Number(value=MAX_VALUE, location=expr.location)
+                        pass
+                    else:
+                                          
+                    
+                        return Number(
+                            value=expr.left.value * expr.right.value,
+                            location=expr.location,  # Use the BinaryOp's location
+                        )
                 elif isinstance(expr.left, Number):
                     if expr.left.value == 0:
                         return Number(value=0, location=expr.location)
@@ -403,9 +414,20 @@ class SemanticAnalyzer:
 
             elif expr.operator == "+":
                 if isinstance(expr.left, Number) and isinstance(expr.right, Number):
-                    return Number(
-                        value=expr.left.value + expr.right.value, location=expr.location
-                    )
+                    
+                    if expr.left.value + expr.right.value > MAX_VALUE:
+                        # self._add_error(
+                        #     "Integer overflow", expr.location
+                        # )
+                        # return Number(value=MAX_VALUE, location=expr.location)
+                        
+                        pass
+                    
+                    else:                  
+                    
+                        return Number(
+                            value=expr.left.value + expr.right.value, location=expr.location
+                        )
                 elif isinstance(expr.left, Number):
                     if expr.left.value == 0:
                         return expr.right
@@ -426,7 +448,7 @@ class SemanticAnalyzer:
                         return expr.right
 
             elif expr.operator == "/":
-                if isinstance(expr.left, Number) and isinstance(expr.right, Number):
+                if isinstance(expr.left, Number) and isinstance(expr.right, Number) and expr.right.value != 0:
                     return Number(
                         value=expr.left.value // expr.right.value,
                         location=expr.location,

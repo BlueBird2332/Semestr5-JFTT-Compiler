@@ -6,13 +6,9 @@ from ..ast_nodes import *
 from ..symbol_table import Symbol, SymbolTable
 from .arithmetic import IRArithmetic
 from .IR_ops import *
+from .procinfo import ProcInfo
 
 
-@dataclass
-class ProcInfo:
-    begin_id: int
-    arguments: List[str]
-    return_var: Variable
 
 class IRGenerator:
     def __init__(self, symbol_table: SymbolTable):
@@ -22,11 +18,11 @@ class IRGenerator:
         self.code: List[IRInstruction] = []
         self.current_proc: Optional[str] = None
         self.costly_ops = symbol_table.costly_operations
-        self.numeric_variables = dict()
+        # self.numeric_variables = dict()
         self.dummy_loc = Location(0, 0)
         self.variables: dict[str, Variable] = dict()
-        self.arithmetic = IRArithmetic(self.label_manager, self.variables)
         self.proc_info: Dict[str, ProcInfo] = dict()
+        self.arithmetic = IRArithmetic(self.label_manager, self.variables, self.proc_info)
 
     
     def create_variable(self, name: Union[str, int],
@@ -94,8 +90,8 @@ class IRGenerator:
             IRJump(label=main_label, comment="Jump to main program start"),
         ])
         
-        # if self.costly_ops:
-        #     self.code.extend(self.arithmetic.generate_arithmetic_procedures(self.costly_ops))
+        if self.costly_ops:
+            self.code.extend(self.arithmetic.generate_arithmetic_procedures(self.costly_ops))
               
             
         for proc in node.procedures:
@@ -226,7 +222,10 @@ class IRGenerator:
             array_var = self.create_variable(cmd.target.name, proc_name=self.current_proc)
             index = self._generate_value(cmd.target.array_index)
             
-            
+            if index.is_pointer:
+                index = wrap_by_reference(index)
+            else:
+                index = wrap_by_value(index)
             
             offset = self.create_variable(name=f"t{self.temp_counter + 1}", is_temp=True, is_pointer=True)
             offset_copy = offset
@@ -234,7 +233,7 @@ class IRGenerator:
                 IRBinaryOp(
                     target=wrap_by_value(offset),
                     left=wrap_by_value(self.create_variable(f"{cmd.target.name}", proc_name=self.current_proc)),
-                    right=wrap_by_value(index),
+                    right=index,
                     operator="+",
                     comment=f"Calculate array offset for assignment"
                 )
@@ -273,7 +272,11 @@ class IRGenerator:
                     )
                     value = wrap_by_value(temp)
             else:
-                value = wrap_by_value(self._generate_value(cmd.value))        
+                value = self._generate_value(cmd.value)       
+                if value.is_pointer:
+                    value = wrap_by_reference(value)
+                else:
+                    value = wrap_by_value(value)
             # Generate array write instruction
                 self.code.append(
                     IRAssign(
@@ -318,6 +321,7 @@ class IRGenerator:
                     )
             else:
                 value = self._generate_value(cmd.value)
+                print(f"VALUE: {value} for {cmd.value}")
                 if value.is_pointer:
                     value = wrap_by_reference(value)
                 else:
@@ -338,32 +342,42 @@ class IRGenerator:
         
         
         left = self._generate_value(op.left)
+        if left.is_pointer:
+            left = wrap_by_reference(left)
+        else:
+            left = wrap_by_value(left)
         right = self._generate_value(op.right)
+        if right.is_pointer:
+            right = wrap_by_reference(right)
+        else:
+            right = wrap_by_value(right)
+            
+        if target.is_pointer:
+            target = wrap_by_reference(target)
+        else:
+            target = wrap_by_value(target)
+            
 
         if op.operator == "*":
-            if isinstance(op.right, Number):
-                if op.right.value == 0:
-                    self.code.append(
-                        IRAssign(
-                            target=target, value="0", comment="Multiplication by 0"
-                        )
-                    )
-                    return
-                if op.right.value == 1:
-                    self.code.append(
-                        IRAssign(
-                            target=target,
-                            value=left,
-                            comment="Multiplication by 1",
-                        )
-                    )
-                    return
+            if isinstance(op.right, Number) or isinstance(op.left, Number):
+                pass # for now
+            
+            self.code.append(
+                IRBinaryOp(
+                    target=target,
+                    left=left,
+                    right=right,
+                    operator=op.operator,
+                    comment=f"Optimized {op.operator} operation",
+            ))
+                
+            
 
         elif op.operator in {"/", "%"}:
             if isinstance(op.right, Number) and op.right.value == 0:
                 self.code.append(
                     IRAssign(
-                        target=target, value="0", comment=f"Division/modulo by 0 -> 0"
+                        target=target, value=self.create_variable("0", is_const=True), comment=f"Division/modulo by 0 -> 0"
                     )
                 )
                 return
@@ -377,15 +391,19 @@ class IRGenerator:
                 )
                 return
 
-        self.code.append(
-            IRBinaryOp(
-                target=target,
-                left=left,
-                right=right,
-                operator=op.operator,
-                comment=f"Optimized {op.operator} operation",
+            self.code.append(
+                IRBinaryOp(
+                    target=target,
+                    left=left,
+                    right=right,
+                    operator=op.operator,
+                    comment=f"Optimized {op.operator} operation",
+                )
             )
-        )
+        
+        else:
+            raise ValueError(f"Unsupported operator: {op.operator}")
+    
 
     def _generate_if(self, cmd: IfStatement) -> None:
         else_label = self.label_manager.new_label(
@@ -526,13 +544,13 @@ class IRGenerator:
         else:
             right = wrap_by_value(right)
 
-        if cmd.condition.operator in [">=", "<=", "="]:
+        if cmd.condition.operator in [">=", "<=", "!="]:
             if cmd.condition.operator == ">=":
                 cmd.condition.operator = "<"
             elif cmd.condition.operator == "<=":
                 cmd.condition.operator = ">"
-            elif cmd.condition.operator == "=":
-                cmd.condition.operator = "!="
+            elif cmd.condition.operator == "!=":
+                cmd.condition.operator = "="
 
             self.code.append(
                 IRCondJump(
@@ -611,6 +629,11 @@ class IRGenerator:
                 label_type=LabelType.REPEAT_START,
             )
         )
+        
+        end_label = self.label_manager.new_label(
+            LabelType.REPEAT_END, comment="End of repeat loop"
+        )
+
 
         # Generate loop body
         for loop_cmd in cmd.body:
@@ -629,15 +652,52 @@ class IRGenerator:
         else:
             right = wrap_by_value(right)
             
-        self.code.append(
-            IRCondJump(
-                left=left,
-                operator=cmd.condition.operator,
-                right=right,
-                label=start_label,
-                comment="Jump back to repeat start if condition is true",
+            
+        if cmd.condition.operator in [">=", "<=", "!="]:
+            if cmd.condition.operator == ">=":
+                cmd.condition.operator = "<"
+            elif cmd.condition.operator == "<=":
+                cmd.condition.operator = ">"
+            elif cmd.condition.operator == "!=":
+                cmd.condition.operator = "="
+
+            self.code.append(
+                IRCondJump(
+                    left=left,
+                    operator=cmd.condition.operator,
+                    right=right,
+                    label=start_label,
+                    comment="Jump back to repeat start if condition is true",
+                )
             )
-        )
+            # Else we exit the loop
+        else:
+            # WE NEED TO INVERT THE CONDITION      
+            if_else_helepr = self.label_manager.new_label(
+                LabelType.IF_HELPER, comment="if helper for repeat loop"
+            )   
+                
+            
+            self.code.append(
+                IRCondJump(
+                    left=left,
+                    operator=cmd.condition.operator,
+                    right=right,
+                    label=end_label,
+                    comment="Jump back to repeat start if condition is true",
+                )
+            )
+            self.code.append(
+                IRJump(label=start_label, comment="Jump to end of repeat loop")
+            )
+            
+            self.code.append(
+                IRLabel(
+                    label_id=end_label,
+                    comment=self.label_manager.get_comment(end_label),
+                    label_type=LabelType.REPEAT_END,
+            ))
+                    
 
     def _generate_for(self, cmd: ForLoop) -> None:
         start_label = self.label_manager.new_label(
@@ -652,6 +712,7 @@ class IRGenerator:
         # Initialize loop variable
         iterator = BY_VALUE(self.create_variable(cmd.iterator))
         start_val = self._generate_value(cmd.start)
+        # iterator_low = self.create_variable("iterator_low", is_temp=True)
         if start_val.is_pointer:
             start_val = wrap_by_reference(start_val)
         else:
@@ -662,6 +723,15 @@ class IRGenerator:
             end_val = wrap_by_reference(end_val)
         else:
             end_val = wrap_by_value(end_val)
+            
+        iterator_end = self.create_variable(name=f"t{self.temp_counter + 1}", is_temp=True)
+        self.code.append(
+            IRAssign(
+                target=BY_VALUE(iterator_end),
+                value=end_val,
+                comment=f"Initialize for loop iterator end {iterator_end}",
+            )
+        )
 
         self.code.append(
             IRAssign(
@@ -685,7 +755,7 @@ class IRGenerator:
                 IRCondJump(
                     left=iterator,
                     operator="<",
-                    right=end_val,
+                    right=iterator_end,
                     label=end_label,
                     comment="Exit loop if iterator < end value (downto)",
                 )
@@ -695,7 +765,7 @@ class IRGenerator:
                 IRCondJump(
                     left=iterator,
                     operator=">",
-                    right= end_val,
+                    right= iterator_end,
                     label=end_label,
                     comment="Exit loop if iterator > end value",
                 )
@@ -806,7 +876,7 @@ class IRGenerator:
         )
         
         
-        return temp
+        return BY_VALUE(temp)
 
     def _generate_read(self, cmd: ReadCommand) -> None:
         target = self.create_variable(cmd.target.name)
