@@ -1,5 +1,0 @@
-check arrays' indexes - check arrays calls if amount of calls only involves constants
- use that to minimize memory allocation
-
-
-caching mechanisms - use memory space to store most often reappearing results

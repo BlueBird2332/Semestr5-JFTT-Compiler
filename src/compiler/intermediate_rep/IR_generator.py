@@ -321,7 +321,6 @@ class IRGenerator:
                     )
             else:
                 value = self._generate_value(cmd.value)
-                print(f"VALUE: {value} for {cmd.value}")
                 if value.is_pointer:
                     value = wrap_by_reference(value)
                 else:

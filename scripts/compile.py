@@ -59,9 +59,6 @@ def main():
             print(compiler.format_error(error))
         sys.exit(1)
 
-    if args.verbose:
-        print("\nParse tree:")
-        # print(tree.root_node.sexp())
 
     # Build AST
     try:
@@ -70,9 +67,6 @@ def main():
         print(f"Error building AST: {e}")
         sys.exit(1)
 
-    print("AST built successfully!")
-    # print_ast(ast)
-    # save ast to file
 
     # Perform semantic analysis
     success, semantic_errors, symbol_table = semantic_analyzer.analyze(ast)
@@ -96,47 +90,20 @@ def main():
     # print("Compilation successful!")
     tac_gen = IRGenerator(symbol_table)
     ir, vars, proc_info = tac_gen.generate(ast)
-    # for item in ir:
-    #     # print(item.print_full())
-    #     print(item)
 
-    with open("IR_file", "w") as f:
-        for item in ir:
-            f.write(item.print_full() + "\n")
             
     mem_manager = MemoryMap(vars)
-    # mem_manager.print_map()
     
-    for item in ir:
-        print(item)
-    
-    # for k,v in proc_info.items():
-    #     print(f"Proc: {k} metadta: {v}")
+
     
     code_gen = VMCodeGenerator(mem_manager, vars, proc_info, costly_ops=symbol_table.costly_operations)
     code = code_gen.generate(ir)
-    # for index, item in enumerate(code):
-    #     print(f"{index}: {item}")
         
         
     with open(args.output_file, 'w+') as f:
         for item in code:
             f.write(item)
             f.write("\n")
-        
-    
-    
-    # mem_map = mem_manager.assign_memory(ir)
-    # mem_manager.print_memory_map()
-
-    # Generate VM code
-    # success, code = vm_compiler.compile(ast, symbol_table, output_file)
-    # if not success:
-    #     print("VM code generation failed!")
-    #     sys.exit(1)
-
-    print(f"Successfully compiled to {args.output_file}")
-
 
 if __name__ == "__main__":
     main()

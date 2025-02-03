@@ -1,6 +1,3 @@
-# Editable Git install with no remote (compiler==0.1.0)
--e /home/mikele/Desktop/compiler/src
-tree-sitter==0.23.2
-# Editable Git install with no remote (tree-sitter-jftt==0.1.0)
--e /home/mikele/Desktop/compiler/tree-sitter-jftt
-tree-sitter-jftt-parser @ file:///home/mikele/Desktop/compiler/tree-sitter-jftt
+tree-sitter-jftt
+tree-sitter
+-e src/

@@ -14,7 +14,7 @@ class VMCodeGenerator:
         self.instruction_counter = 0
         
         
-        self.debug = True
+        self.debug = False
         
         if self.debug:
             
@@ -124,8 +124,6 @@ class VMCodeGenerator:
         
         code = []
         target = op.target
-        print("TARGET", target.name)
-        target.print_full() 
         if isinstance(target, BY_REFERENCE):
             
             code.append(GET(0))
@@ -218,8 +216,6 @@ class VMCodeGenerator:
                     
             if passed_argument.is_array or passed_argument.is_pointer:
                 
-                print(f"LOADING POINTER INTO {param_signature.name}")
-                
                 code.append(LOAD(self.memory_map.get_address(passed_argument.name)))
                 code.append(STORE(self.memory_map.get_address(param_signature.name)))
             else:
@@ -228,8 +224,8 @@ class VMCodeGenerator:
             self.instruction_counter +=2
         proc_label = self.proc_info[op.name].begin_id
         
-        return_address = self.instruction_counter + 3
-        print(f"RETURN ADDRESS {return_address} from line {self.instruction_counter}")
+
+        # print(f"RETURN ADDRESS {return_address} from line {self.instruction_counter}")
         code.append(SET_HERE(3))
         code.append(STORE(self.memory_map.get_address(self.proc_info[op.name].return_var.name)))
         code.append(JUMPLABEL(proc_label))
@@ -250,7 +246,6 @@ class VMCodeGenerator:
         return_value = op.return_variable
         self.instruction_counter += 1
         code.append(RETURN(self.memory_map.get_address(return_value.name)))
-        print(f"RETURN {return_value}")
         
         if self.debug:
             print(f"IRReturn {op}")
@@ -330,7 +325,7 @@ class VMCodeGenerator:
     
             
             return_address = self.instruction_counter + 3
-            print(f"RETURN ADDRESS {return_address} from line {self.instruction_counter}")
+            # print(f"RETURN ADDRESS {return_address} from line {self.instruction_counter}")
             code.append(SET_HERE(3))
             code.append(STORE(self.memory_map.get_address(self.proc_info["mul"].return_var.name)))
             code.append(JUMPLABEL(self.proc_info["mul"].begin_id))
@@ -362,7 +357,7 @@ class VMCodeGenerator:
             code.append(STORE(self.memory_map.get_address("arg2")))
             
             return_address = self.instruction_counter + 3
-            print(f"RETURN ADDRESS {return_address} from line {self.instruction_counter}")
+            # print(f"RETURN ADDRESS {return_address} from line {self.instruction_counter}")
             code.append(SET_HERE(3))
             code.append(STORE(self.memory_map.get_address(self.proc_info["div"].return_var.name)))
             code.append(JUMPLABEL(self.proc_info["div"].begin_id))
@@ -394,7 +389,7 @@ class VMCodeGenerator:
             code.append(STORE(self.memory_map.get_address("arg2")))
             
             return_address = self.instruction_counter + 3
-            print(f"RETURN ADDRESS {return_address} from line {self.instruction_counter}")
+            # print(f"RETURN ADDRESS {return_address} from line {self.instruction_counter}")
             code.append(SET_HERE(3))
             code.append(STORE(self.memory_map.get_address(self.proc_info["div"].return_var.name)))
             code.append(JUMPLABEL(self.proc_info["div"].begin_id))

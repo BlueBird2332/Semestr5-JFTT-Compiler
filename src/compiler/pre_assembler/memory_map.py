@@ -48,9 +48,7 @@ class MemoryMap:
                 # print(f"Ptr offset: {ptr_offset}")
                 zero_adress = current_memory + offset
 
-                print(f"Array memory start: {current_memory}")
-                print(f"Array memory end: {current_memory + var.array_size}")
-                print(f"Array start address: {zero_adress}")
+            
                 
                 
                     

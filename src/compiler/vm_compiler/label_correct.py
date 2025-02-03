@@ -8,20 +8,16 @@ def correct_labels(code: List[base_op]) -> List[str]:
     new_code = []
     
     for item in code:
-        print(f"{counter}: {item}")
         if isinstance(item, LABEL):
             label_map[item.label_id] = counter
         else:
             counter += 1
             new_code.append(item)
             
-    print
-    
     corrected_code = []
     
     for curr, item in enumerate(new_code):
         if isinstance(item, JUMPLABEL):
-            print(f"JUMPLABEL: {item.label_id}")
             
             offset = label_map[item.label_id] - curr
             corrected_code.append(str(JUMP(offset)))
