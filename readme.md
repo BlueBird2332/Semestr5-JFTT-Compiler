@@ -18,7 +18,8 @@ source venv/bin/activate
 
 3. Zainstaluj wymagane pakiety pythona:
 ```bash
-pip  install requirements.txt
+pip install -e tree-sitter-jftt
+pip install tree-sitter
 
 # Zainstaluj pakiet kompilatora
 cd src
@@ -47,8 +48,6 @@ Główny kod kompilatora
 ## `scripts/`
 Skrypty narzędziowe:
 - `compile.py` - główny skrypt kompilacji
-- `comple.sh` - wrapper do kompilacji
-- `rebuild_tree.sh` - skrypt do przebudowy gramatyki Tree-sitter
 
 ## `tree-sitter-jftt/`
 Parser i gramatyka języka:
